@@ -27,11 +27,12 @@ function sendMessage() {
   socket.emit("chat message", {
     username: currentUser,
     text,
-    groupId: currentChat
+    groupId: "general" // 👈 add this!
   });
 
   document.getElementById("message").value = "";
 }
+
 
 // Handle incoming messages
 socket.on("chat message", (msg) => {
@@ -100,6 +101,8 @@ socket.on("sign in success", (username) => {
   alert("✅ Welcome, " + username + "!");
   showScreen("chat-screen");
   switchChat("general");
+  socket.emit("join group", "general");
+
 });
 
 socket.on("sign in fail", (msg) => {
