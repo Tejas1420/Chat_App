@@ -1,6 +1,7 @@
 const socket = io(window.location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
-let currentUser = "";
 
+let currentUser = "";
+let currentChat = "general";
 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((div) => div.classList.remove("active"));
@@ -24,37 +25,19 @@ function sendMessage() {
   if (!text.trim()) return;
 
   socket.emit("chat message", {
-    username: currentUser, // ✅ send username!
-    text
+    username: currentUser,
+    text,
+    groupId: currentChat
   });
 
   document.getElementById("message").value = "";
 }
 
-
-// socket events
-socket.on("sign up success", () => {
-  alert("✅ Signed up! Now sign in.");
-  showScreen("signin-screen");
-});
-
-socket.on("sign up fail", (msg) => {
-  alert(msg);
-});
-
-socket.on("sign in success", (username) => {
-  currentUser = username; // ✅ store the username!
-  alert("✅ Welcome, " + username + "!");
-  showScreen("chat-screen");
-});
-
-
-socket.on("sign in fail", (msg) => {
-  alert(msg);
-});
-
+// Handle incoming messages
 socket.on("chat message", (msg) => {
-  addMessage(msg);
+  if (msg.groupId === currentChat) {
+    addMessage(msg);
+  }
 });
 
 socket.on("previous messages", (msgs) => {
@@ -80,6 +63,16 @@ function addMessage(msg) {
   document.getElementById("messages").appendChild(li);
 }
 
+function deleteMessage(id) {
+  socket.emit("delete message", { id, groupId: currentChat });
+}
+
+function editMessage(id, oldText) {
+  const newText = prompt("Edit message:", oldText);
+  if (newText && newText.trim()) {
+    socket.emit("edit message", { id, newText, groupId: currentChat });
+  }
+}
 
 socket.on("message deleted", (id) => {
   const el = document.getElementById(id);
@@ -93,14 +86,47 @@ socket.on("message edited", (msg) => {
   }
 });
 
-function deleteMessage(id) {
-  socket.emit("delete message", id);
+socket.on("sign up success", () => {
+  alert("✅ Signed up! Now sign in.");
+  showScreen("signin-screen");
+});
+
+socket.on("sign up fail", (msg) => {
+  alert(msg);
+});
+
+socket.on("sign in success", (username) => {
+  currentUser = username;
+  alert("✅ Welcome, " + username + "!");
+  showScreen("chat-screen");
+  switchChat("general");
+});
+
+socket.on("sign in fail", (msg) => {
+  alert(msg);
+});
+
+// Switching chat
+function switchChat(chatId) {
+  currentChat = chatId;
+  document.getElementById("chat-title").textContent =
+    chatId === "general" ? "🌐 General" : chatId.includes("group-") ? `👥 ${chatId.slice(6)}` : `👤 DM with ${chatId.replace(currentUser, "").replace("-", "")}`;
+  document.getElementById("messages").innerHTML = "";
+  socket.emit("get messages", chatId);
 }
 
-function editMessage(id, oldText) {
-  const newText = prompt("Edit message:", oldText);
-  if (newText && newText.trim()) {
-    socket.emit("edit message", { id, newText });
+function startNewDM() {
+  const friend = prompt("Enter your friend's username:");
+  if (friend && friend !== currentUser) {
+    const chatId = [currentUser, friend].sort().join("-");
+    switchChat(chatId);
   }
 }
 
+function joinGroup() {
+  const group = prompt("Enter group name:");
+  if (group) {
+    const chatId = "group-" + group.toLowerCase();
+    switchChat(chatId);
+  }
+}

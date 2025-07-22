@@ -7,6 +7,8 @@
   <style>
     .screen { display: none; }
     .screen.active { display: block; }
+    ul { list-style: none; padding: 0; }
+    .bubble { border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -31,12 +33,28 @@
 
 <!-- 🟨 Chat Screen -->
 <div id="chat-screen" class="screen">
-  <h2>💬 Group Chat</h2>
-  <ul id="messages"></ul>
-  <form onsubmit="sendMessage(); return false;">
-    <input id="message" autocomplete="off" placeholder="Type your message..." />
-    <button type="submit">Send</button>
-  </form>
+  <h2>💬 Skibidi Chat</h2>
+  <div style="display: flex;">
+    <!-- Sidebar -->
+    <div style="width: 200px; border-right: 1px solid gray; padding: 10px;">
+      <h3>Chats</h3>
+      <ul id="chat-list">
+        <li onclick="switchChat('general')">🌐 General</li>
+        <li onclick="startNewDM()">➕ Start New DM</li>
+        <li onclick="joinGroup()">➕ Join/Create Group</li>
+      </ul>
+    </div>
+
+    <!-- Chat Window -->
+    <div style="flex-grow: 1; padding: 10px;">
+      <h3 id="chat-title">🌐 General</h3>
+      <ul id="messages"></ul>
+      <form onsubmit="sendMessage(); return false;">
+        <input id="message" autocomplete="off" placeholder="Type your message..." />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
