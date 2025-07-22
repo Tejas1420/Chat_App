@@ -65,13 +65,42 @@ socket.on("previous messages", (msgs) => {
 
 function addMessage(msg) {
   const li = document.createElement("li");
+  li.id = msg._id;
+
   li.innerHTML = `
     <div class="bubble">
       <div class="meta"><strong>${msg.username}</strong> 🕒 ${msg.time} 📅 ${msg.date}</div>
       <div class="text">${msg.text}</div>
+      ${msg.username === currentUser ? `
+        <button onclick="deleteMessage('${msg._id}')">🗑️</button>
+        <button onclick="editMessage('${msg._id}', '${msg.text.replace(/'/g, "\\'")}')">✏️</button>
+      ` : ''}
     </div>
   `;
   document.getElementById("messages").appendChild(li);
 }
 
+
+socket.on("message deleted", (id) => {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+});
+
+socket.on("message edited", (msg) => {
+  const el = document.getElementById(msg._id);
+  if (el) {
+    el.querySelector(".text").textContent = msg.text;
+  }
+});
+
+function deleteMessage(id) {
+  socket.emit("delete message", id);
+}
+
+function editMessage(id, oldText) {
+  const newText = prompt("Edit message:", oldText);
+  if (newText && newText.trim()) {
+    socket.emit("edit message", { id, newText });
+  }
+}
 
