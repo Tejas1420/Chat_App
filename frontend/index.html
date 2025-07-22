@@ -10,6 +10,8 @@
     ul { list-style: none; padding: 0; }
     .bubble { border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 8px; }
   </style>
+  <!-- ✅ Add this BEFORE client.js -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -57,8 +59,11 @@
   </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
+<!-- ✅ Socket.io (loaded from CDN to avoid 502 error) -->
+<!-- ✅ Then load your JS -->
 <script src="client.js"></script>
+
+<!-- ✅ Show screen function defined once -->
 <script>
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(div => div.classList.remove('active'));
