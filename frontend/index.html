@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Skibidi Chat</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- 🟩 Sign Up Screen -->
+<div id="signup-screen" class="screen active">
+  <h2>🟩 Sign Up</h2>
+  <input id="signup-username" placeholder="Username" />
+  <input id="signup-password" type="password" placeholder="Password" />
+  <button onclick="signUp()">Sign Up</button>
+  <p>Already have an account? <button onclick="showScreen('signin-screen')">Sign In</button></p>
+</div>
+
+<!-- 🟦 Sign In Screen -->
+<div id="signin-screen" class="screen">
+  <h2>🟦 Sign In</h2>
+  <input id="signin-username" placeholder="Username" />
+  <input id="signin-password" type="password" placeholder="Password" />
+  <button onclick="signIn()">Sign In</button>
+  <p>New here? <button onclick="showScreen('signup-screen')">Sign Up</button></p>
+</div>
+
+<!-- 🟨 Chat Screen -->
+<div id="chat-screen" class="screen">
+  <h2>💬 Skibidi Chat</h2>
+  <ul id="messages"></ul>
+  <form onsubmit="sendMessage(); return false;">
+    <input id="message" autocomplete="off" placeholder="Type your message..." />
+    <button type="submit">Send</button>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="client.js"></script>
+<script>
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(div => div.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+</script>
+</body>
+</html>

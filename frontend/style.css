@@ -1,0 +1,47 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f0f0f0;
+  padding: 30px;
+  text-align: center;
+}
+
+input {
+  padding: 8px;
+  margin: 5px;
+  width: 200px;
+}
+
+button {
+  padding: 8px 12px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+ul#messages {
+  list-style: none;
+  padding: 0;
+}
+
+ul#messages li {
+  margin: 5px 0;
+  background: #fff;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.bubble {
+  background: #eee;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
+}
+
+.meta {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.text {
+  margin-top: 4px;
+}
+
