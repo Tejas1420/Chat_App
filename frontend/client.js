@@ -65,9 +65,9 @@ function addMessage(msg) {
 }
 
 function deleteMessage(id) {
-socket.emit("delete message", { id: messageId });
-
+  socket.emit("delete message", { id: id });
 }
+
 
 function editMessage(id, oldText) {
   const newText = prompt("Edit message:", oldText);
