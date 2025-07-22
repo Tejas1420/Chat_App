@@ -65,7 +65,8 @@ function addMessage(msg) {
 }
 
 function deleteMessage(id) {
-  socket.emit("delete message", { id, groupId: currentChat });
+socket.emit("delete message", { id: messageId });
+
 }
 
 function editMessage(id, oldText) {

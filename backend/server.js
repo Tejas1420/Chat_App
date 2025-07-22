@@ -119,10 +119,15 @@ io.on("connection", (socket) => {
   });
 
   // ✂️ DELETE MESSAGE
-  socket.on("delete message", async (id) => {
+socket.on("delete message", async ({ id }) => {
+  try {
     await Message.findByIdAndDelete(id);
     io.emit("message deleted", id);
-  });
+  } catch (err) {
+    console.error("❌ Delete failed:", err);
+  }
+});
+
 
   // ✏️ EDIT MESSAGE
   socket.on("edit message", async ({ id, newText }) => {
