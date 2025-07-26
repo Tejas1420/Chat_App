@@ -78,15 +78,21 @@ function addMessage(msg) {
 }
 
 function deleteMessage(id) {
-  socket.emit("delete message", { id });
+  socket.emit("delete message", { id, username: currentUser});
 }
 
 function editMessage(id, oldText) {
   const newText = prompt("Edit message:", oldText);
   if (newText && newText.trim()) {
-    socket.emit("edit message", { id, newText: escapeHTML(newText), groupId: currentChat });
+    socket.emit("edit message", {
+      id,
+      newText: escapeHTML(newText),
+      groupId: currentChat,
+      username: currentUser // ✅ add this
+    });
   }
 }
+
 
 socket.on("message deleted", (id) => {
   const el = document.getElementById(id);
