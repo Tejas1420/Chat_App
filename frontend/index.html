@@ -8,9 +8,18 @@
     .screen { display: none; }
     .screen.active { display: block; }
     ul { list-style: none; padding: 0; }
-    .bubble { border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 8px; }
+    .bubble {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      background-color: #f1f1f1;
+    }
+    button {
+      margin-top: 5px;
+    }
   </style>
-  <!-- ✅ Add this BEFORE client.js -->
+  <!-- ✅ Load Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
@@ -59,11 +68,10 @@
   </div>
 </div>
 
-<!-- ✅ Socket.io (loaded from CDN to avoid 502 error) -->
-<!-- ✅ Then load your JS -->
+<!-- ✅ Load client logic -->
 <script src="client.js"></script>
 
-<!-- ✅ Show screen function defined once -->
+<!-- ✅ Redundant showScreen defined again (can be removed if already in client.js) -->
 <script>
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(div => div.classList.remove('active'));
