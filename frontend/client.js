@@ -3,6 +3,18 @@ const socket = io(window.location.hostname.includes("localhost") ? "http://local
 let currentUser = "";
 let currentChat = "general";
 
+
+function escapeHTML(str) {
+  if (typeof str !== "string") return ""; // 🛡 Prevent crash
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((div) => div.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -135,17 +147,4 @@ function joinGroup() {
     const chatId = "group-" + group.toLowerCase();
     switchChat(chatId);
   }
-}
-
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (tag) => {
-    const chars = {
-      '&': "&amp;",
-      '<': "&lt;",
-      '>': "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    };
-    return chars[tag] || tag;
-  });
 }
