@@ -110,12 +110,16 @@ socket.on("sign in fail", (msg) => {
 });
 
 function switchChat(chatId) {
+  if (currentChat === chatId) return; // Don't reload if already in this chat!
+
   currentChat = chatId;
   document.getElementById("chat-title").textContent =
     chatId === "general" ? "🌐 General" : chatId.includes("group-") ? `👥 ${chatId.slice(6)}` : `👤 DM with ${chatId.replace(currentUser, "").replace("-", "")}`;
+
   document.getElementById("messages").innerHTML = "";
   socket.emit("get messages", chatId);
 }
+
 
 function startNewDM() {
   const friend = prompt("Enter your friend's username:");
