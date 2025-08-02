@@ -84,14 +84,30 @@ socket.on("chat message", async (msg) => {
   });
 });
 
-  io.on("connection", (socket) => {
-  // Get IP address (works on Render too)
-  const ip = socket.handshake.headers["x-forwarded-for"] || socket.handshake.address;
+io.on("connection", (socket) => {
+  // Get client IP(s) from headers (Render passes it here)
+  let forwarded = socket.handshake.headers["x-forwarded-for"];
+  let ipList = [];
 
-  console.log("New user connected from:", ip);
+  if (forwarded) {
+    // Split in case multiple IPs are in the header
+    ipList = forwarded.split(",").map(ip => ip.trim());
+  } else {
+    // Fallback to direct address
+    ipList = [socket.handshake.address];
+  }
 
-  // You could emit this back to your dashboard client
-  console.log("new connection", { ip });
+  // Separate IPv4 vs IPv6
+  const ipv4s = ipList.filter(ip => ip.includes("."));
+  const ipv6s = ipList.filter(ip => ip.includes(":"));
+
+  console.log("New user connected:");
+  console.log("IPv4(s):", ipv4s.length ? ipv4s : "None");
+  console.log("IPv6(s):", ipv6s.length ? ipv6s : "None");
+
+  // If you want to broadcast this info:
+  io.emit("new connection", { ipv4: ipv4s, ipv6: ipv6s });
 });
+
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));
