@@ -22,6 +22,7 @@ mongoose.connection.on('error', (err) => {
 });
 
 
+
 app.use(express.static(path.join(__dirname, "../frontend")));
 
 io.on("connection", (socket) => {
@@ -81,6 +82,16 @@ socket.on("chat message", async (msg) => {
     const updated = await Message.findByIdAndUpdate(id, { text: newText }, { new: true });
     io.emit("message edited", updated);
   });
+});
+
+  io.on("connection", (socket) => {
+  // Get IP address (works on Render too)
+  const ip = socket.handshake.headers["x-forwarded-for"] || socket.handshake.address;
+
+  console.log("New user connected from:", ip);
+
+  // You could emit this back to your dashboard client
+  console.log("new connection", { ip });
 });
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));
