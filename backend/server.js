@@ -85,29 +85,19 @@ socket.on("chat message", async (msg) => {
 });
 
 io.on("connection", (socket) => {
-  // Get client IP(s) from headers (Render passes it here)
+  // Cloudflare’s header for real IP
+  let realIP = socket.handshake.headers["cf-connecting-ip"];
+
+  // Fallbacks
   let forwarded = socket.handshake.headers["x-forwarded-for"];
-  let ipList = [];
-
-  if (forwarded) {
-    // Split in case multiple IPs are in the header
-    ipList = forwarded.split(",").map(ip => ip.trim());
-  } else {
-    // Fallback to direct address
-    ipList = [socket.handshake.address];
-  }
-
-  // Separate IPv4 vs IPv6
-  const ipv4s = ipList.filter(ip => ip.includes("."));
-  const ipv6s = ipList.filter(ip => ip.includes(":"));
+  let address = socket.handshake.address;
 
   console.log("New user connected:");
-  console.log("IPv4(s):", ipv4s.length ? ipv4s : "None");
-  console.log("IPv6(s):", ipv6s.length ? ipv6s : "None");
-
-  // If you want to broadcast this info:
-  io.emit("new connection", { ipv4: ipv4s, ipv6: ipv6s });
+  console.log("cf-connecting-ip:", realIP || "None");
+  console.log("x-forwarded-for:", forwarded || "None");
+  console.log("handshake.address:", address || "None");
 });
+
 
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));
