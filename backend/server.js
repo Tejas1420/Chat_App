@@ -93,6 +93,7 @@ io.on("connection", (socket) => {
   let address = socket.handshake.address;
 
   console.log("New user connected:");
+  console.log("Username: ", msg.username)
   console.log("cf-connecting-ip:", realIP || "None");
   console.log("x-forwarded-for:", forwarded || "None");
   console.log("handshake.address:", address || "None");
