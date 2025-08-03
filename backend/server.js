@@ -30,11 +30,13 @@ io.on("connection", (socket) => {
   const realIP = socket.handshake.headers["cf-connecting-ip"];
   const forwarded = socket.handshake.headers["x-forwarded-for"];
   const address = socket.handshake.address;
+  const ua = socket.handshake.headers["user-agent"] || "Unknown";
 
   console.log("🔍 Connection details:");
   console.log("cf-connecting-ip:", realIP || "None");
   console.log("x-forwarded-for:", forwarded || "None");
   console.log("handshake.address:", address || "None");
+  console.log("   User-Agent:", ua);
 
   // 🟩 SIGN UP
   socket.on("sign up", async ({ username, password }) => {
