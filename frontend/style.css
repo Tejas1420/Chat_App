@@ -45,3 +45,19 @@ ul#messages li {
   margin-top: 4px;
 }
 
+body.dark-mode {
+  background: #121212;
+  color: #f0f0f0;
+}
+
+body.dark-mode ul#messages li {
+  background: #1e1e1e;
+}
+
+body.dark-mode .bubble {
+  background: #2c2c2c;
+}
+
+body.dark-mode .meta {
+  color: #aaaaaa;
+}
