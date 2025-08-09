@@ -65,7 +65,18 @@ async function sendPushNotificationToAll(payload) {
       return;
     }
 
-    const response = await admin.messaging().sendToDevice(tokens, payload);
+    const message = {
+  tokens: tokens,
+  notification: payload.notification,
+  webpush: {
+    fcmOptions: {
+      link: payload.notification.click_action,
+    },
+  },
+};
+
+const response = await admin.messaging().sendMulticast(message);
+
     console.log('Push notification sent:', response);
   } catch (err) {
     console.error('Error sending push notification:', err);
