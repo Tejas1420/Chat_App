@@ -65,17 +65,21 @@ async function sendPushNotificationToAll(payload) {
       return;
     }
 
-    const message = {
+const response = await admin.messaging().sendMulticast({
   tokens: tokens,
-  notification: payload.notification,
+  notification: {
+    title: `New message from ${saved.username}`,
+    body: saved.text,
+  },
   webpush: {
     fcmOptions: {
-      link: payload.notification.click_action,
+      link: 'https://chat-app-4x3l.onrender.com/',
+    },
+    notification: {
+      icon: '/icon-192.png',
     },
   },
-};
-
-const response = await admin.messaging().sendMulticast(message);
+});
 
     console.log('Push notification sent:', response);
   } catch (err) {
