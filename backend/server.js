@@ -9,7 +9,7 @@ import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import path from "path";
 
-const serviceAccountPath = path.resolve("./backend/serviceAccountKey.json");
+const serviceAccountPath = path.resolve("./etc/secrets/serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
 
 
