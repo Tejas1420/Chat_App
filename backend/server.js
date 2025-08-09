@@ -233,6 +233,18 @@ const payload = {
 sendPushNotificationToAll(payload);
 
 });
+socket.on("delete message", async (id) => {
+  try {
+    // Delete from DB
+    await Message.findByIdAndDelete(id);
+
+    // Notify all clients that message is deleted
+    io.emit("message deleted", id);
+  } catch (err) {
+    console.error("Error deleting message:", err);
+    socket.emit("error", "Failed to delete message");
+  }
+});
 });
 
 async function sendPushNotification(userId, payload) {
