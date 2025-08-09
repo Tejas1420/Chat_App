@@ -32,8 +32,6 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-app.use(express.json());
-
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -219,6 +217,23 @@ io.on("connection", (socket) => {
     const updated = await Message.findByIdAndUpdate(id, { text: newText }, { new: true });
     io.emit("message edited", updated);
   });
+
+  const saved = await Message.create(fullMsg);
+io.emit("chat message", saved);
+
+// Prepare notification payload
+const payload = {
+  notification: {
+    title: `New message from ${saved.username}`,
+    body: saved.text,
+    click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
+    icon: '/icon-192.png'  // make sure this icon exists in frontend folder
+  }
+};
+
+// Send push notification to all users
+sendPushNotificationToAll(payload);
+
 });
 
 async function sendPushNotification(userId, payload) {
@@ -235,20 +250,5 @@ async function sendPushNotification(userId, payload) {
   }
 }
 
-const saved = await Message.create(fullMsg);
-io.emit("chat message", saved);
-
-// Prepare notification payload
-const payload = {
-  notification: {
-    title: `New message from ${saved.username}`,
-    body: saved.text,
-    click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
-    icon: '/icon-192.png'  // make sure this icon exists in frontend folder
-  }
-};
-
-// Send push notification to all users
-sendPushNotificationToAll(payload);
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));
