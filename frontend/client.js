@@ -1,6 +1,19 @@
 const socket = io(window.location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
 let currentUser = "";
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(registration => {
+      console.log('Service Worker registered with scope:', registration.scope);
+    })
+    .catch(err => {
+      console.error('Service Worker registration failed:', err);
+    });
+} else {
+  console.warn('Service Workers are not supported by this browser.');
+}
+
+
 // Import Firebase functions (using ES modules via CDN)
 import { registerForPush } from './firebase-init.js';  // make sure this path is correct and firebase-init.js is a module
 
