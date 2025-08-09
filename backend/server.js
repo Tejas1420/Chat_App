@@ -218,21 +218,23 @@ io.on("connection", (socket) => {
     io.emit("message edited", updated);
   });
 
+socket.on("chat message notify", async (msg) => {
   const saved = await Message.create(fullMsg);
-io.emit("chat message", saved);
+  io.emit("chat message", saved);
 
-// Prepare notification payload
-const payload = {
-  notification: {
-    title: `New message from ${saved.username}`,
-    body: saved.text,
-    click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
-    icon: '/icon-192.png'  // make sure this icon exists in frontend folder
-  }
-};
+  // Prepare notification payload
+  const payload = {
+    notification: {
+      title: `New message from ${saved.username}`,
+      body: saved.text,
+      click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
+      icon: '/icon-192.png'  // make sure this icon exists in frontend folder
+    }
+  };
+});
 
 // Send push notification to all users
-sendPushNotificationToAll(payload);
+  sendPushNotificationToAll(payload);
 
 });
 
