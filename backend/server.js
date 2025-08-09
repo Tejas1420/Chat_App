@@ -6,11 +6,20 @@ const path = require("path");
 const dotenv = require("dotenv");
 const Message = require("./models/Message");
 const User = require("./models/user"); // Make sure filename matches exactly
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -33,6 +42,49 @@ function sanitize(input) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+const userTokens = {}; // in-memory storage, replace with DB in production
+
+async function sendPushNotificationToAll(payload) {
+  try {
+    const users = await User.find({ fcmTokens: { $exists: true, $ne: [] } });
+    const tokens = users.flatMap(user => user.fcmTokens);
+
+    if (tokens.length === 0) {
+      console.log('No tokens registered to send notifications');
+      return;
+    }
+
+    const response = await admin.messaging().sendToDevice(tokens, payload);
+    console.log('Push notification sent:', response);
+  } catch (err) {
+    console.error('Error sending push notification:', err);
+  }
+}
+
+
+app.post('/api/register-token', async (req, res) => {
+  const { userId, token } = req.body;
+  if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
+
+  try {
+    const user = await User.findOne({ username: userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Add token only if not already present
+    if (!user.fcmTokens.includes(token)) {
+      user.fcmTokens.push(token);
+      await user.save();
+    }
+
+    console.log(`Registered token for user ${userId}:`, token);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error registering token:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // 🛡️ Spam tracking
 const userData = {};
@@ -155,5 +207,35 @@ io.on("connection", (socket) => {
     io.emit("message edited", updated);
   });
 });
+
+async function sendPushNotification(userId, payload) {
+  if (!userTokens[userId]) {
+    console.log(`No tokens registered for user ${userId}`);
+    return;
+  }
+  const tokens = userTokens[userId];
+  try {
+    const response = await admin.messaging().sendToDevice(tokens, payload);
+    console.log(`Sent push notification to user ${userId}`, response);
+  } catch (err) {
+    console.error('Error sending push notification:', err);
+  }
+}
+
+const saved = await Message.create(fullMsg);
+io.emit("chat message", saved);
+
+// Prepare notification payload
+const payload = {
+  notification: {
+    title: `New message from ${saved.username}`,
+    body: saved.text,
+    click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
+    icon: '/icon-192.png'  // make sure this icon exists in frontend folder
+  }
+};
+
+// Send push notification to all users
+sendPushNotificationToAll(payload);
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));

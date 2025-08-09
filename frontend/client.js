@@ -1,6 +1,8 @@
 const socket = io(window.location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
 let currentUser = "";
 
+// Import Firebase functions (using ES modules via CDN)
+import { registerForPush } from './firebase-init.js';  // make sure this path is correct and firebase-init.js is a module
 
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((div) => div.classList.remove("active"));
@@ -19,18 +21,31 @@ function signIn() {
   socket.emit("sign in", { username, password });
 }
 
+// Register push after successful sign-in
+socket.on("sign in success", async (username) => {
+  currentUser = username;
+  alert("✅ Welcome, " + username + "!");
+  showScreen("chat-screen");
+
+  try {
+    const token = await registerForPush(currentUser);
+    console.log('Push token registered:', token);
+  } catch (err) {
+    console.error('Push registration failed:', err);
+  }
+});
+
 function sendMessage() {
   const text = document.getElementById("message").value;
   if (!text.trim()) return;
 
   socket.emit("chat message", {
-    username: currentUser, // ✅ send username!
+    username: currentUser,
     text
   });
 
   document.getElementById("message").value = "";
 }
-
 
 // socket events
 socket.on("sign up success", () => {
@@ -41,13 +56,6 @@ socket.on("sign up success", () => {
 socket.on("sign up fail", (msg) => {
   alert(msg);
 });
-
-socket.on("sign in success", (username) => {
-  currentUser = username; // ✅ store the username!
-  alert("✅ Welcome, " + username + "!");
-  showScreen("chat-screen");
-});
-
 
 socket.on("sign in fail", (msg) => {
   alert(msg);
@@ -80,7 +88,6 @@ function addMessage(msg) {
   document.getElementById("messages").appendChild(li);
 }
 
-
 socket.on("message deleted", (id) => {
   const el = document.getElementById(id);
   if (el) el.remove();
@@ -103,4 +110,3 @@ function editMessage(id, oldText) {
     socket.emit("edit message", { id, newText });
   }
 }
-
