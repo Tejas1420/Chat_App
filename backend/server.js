@@ -215,7 +215,7 @@ io.on("connection", (socket) => {
 
   sendPushNotificationToAll(payload);
 });
-
+});
 
 async function sendPushNotification(userId, payload) {
   if (!userTokens[userId]) {
