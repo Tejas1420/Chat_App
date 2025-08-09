@@ -8,6 +8,8 @@ import User from "./models/user.js";  // Make sure filenames have .js extension
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
 
 const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
