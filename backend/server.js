@@ -231,7 +231,6 @@ socket.on("chat message notify", async (msg) => {
       icon: '/icon-192.png'  // make sure this icon exists in frontend folder
     }
   };
-});
 
 // Send push notification to all users
   sendPushNotificationToAll(payload);
