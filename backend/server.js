@@ -1,18 +1,20 @@
 import express from "express";
+import mongoose from "mongoose";
+import http from "http";
+import { Server } from "socket.io";
+import path from "path";
+import dotenv from "dotenv";
+import Message from "./models/Message.js";
+import User from "./models/user.js";  // Make sure filenames have .js extension
+import admin from "firebase-admin";
+import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
+
+dotenv.config();
 
 const app = express();
 
-app.use(express.json());    // for parsing JSON request bodies
-app.use(express.static("public"));  // for serving static files
-const mongoose = require("mongoose");
-const http = require("http");
-const { Server } = require("socket.io");
-const path = require("path");
-const dotenv = require("dotenv");
-const Message = require("./models/Message");
-const User = require("./models/user"); // Make sure filename matches exactly
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
+app.use(express.json());
+app.use(express.static("public"));
 
 
 dotenv.config();
