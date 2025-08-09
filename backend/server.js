@@ -245,6 +245,30 @@ socket.on("delete message", async (id) => {
     socket.emit("error", "Failed to delete message");
   }
 });
+socket.on("edit message", async ({ id, newText }) => {
+  try {
+    // Sanitize the new text (to avoid script injection)
+    const sanitizedText = sanitize(newText);
+
+    // Update the message in DB
+    const updatedMsg = await Message.findByIdAndUpdate(
+      id,
+      { text: sanitizedText },
+      { new: true } // to return updated doc
+    );
+
+    if (updatedMsg) {
+      // Notify all clients about the edited message
+      io.emit("message edited", updatedMsg);
+    } else {
+      socket.emit("error", "Message not found");
+    }
+  } catch (err) {
+    console.error("Error editing message:", err);
+    socket.emit("error", "Failed to edit message");
+  }
+});
+
 });
 
 async function sendPushNotification(userId, payload) {
