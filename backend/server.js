@@ -2,7 +2,6 @@ import express from "express";
 import mongoose from "mongoose";
 import http from "http";
 import { Server } from "socket.io";
-import path from "path";
 import dotenv from "dotenv";
 import Message from "./models/Message.js";
 import User from "./models/user.js";  // Make sure filenames have .js extension
