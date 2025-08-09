@@ -110,3 +110,6 @@ function editMessage(id, oldText) {
     socket.emit("edit message", { id, newText });
   }
 }
+
+//making all the functions globally available
+Object.assign(window, { signUp, signIn, sendMessage, showScreen, addMessage, deleteMessage, editMessage});
