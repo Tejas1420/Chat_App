@@ -1,36 +1,41 @@
-import express, { json, static } from "express";
-import { connect, connection } from "mongoose";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import { join } from "path";
-import { config } from "dotenv";
-import { find, create, findByIdAndDelete, findByIdAndUpdate } from "./models/Message";
-import User, { find as _find, findOne } from "./models/user"; // Make sure filename matches exactly
-import { initializeApp, credential as _credential, messaging } from 'firebase-admin';
-import serviceAccount from './serviceAccountKey.json';
+import express from "express";
 
-
-config();
 const app = express();
-const server = createServer(app);
+
+app.use(express.json());    // for parsing JSON request bodies
+app.use(express.static("public"));  // for serving static files
+const mongoose = require("mongoose");
+const http = require("http");
+const { Server } = require("socket.io");
+const path = require("path");
+const dotenv = require("dotenv");
+const Message = require("./models/Message");
+const User = require("./models/user"); // Make sure filename matches exactly
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+
+dotenv.config();
+const app = express();
+const server = http.createServer(app);
 const io = new Server(server);
 
-initializeApp({
-  credential: _credential.cert(serviceAccount),
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
 });
 
-app.use(json());
+app.use(express.json());
 
-connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 
-connection.on("error", (err) => {
+mongoose.connection.on("error", (err) => {
   console.error("MongoDB connection error:", err);
 });
 
-app.use(static(join(__dirname, "../frontend")));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // 🛡️ Sanitize function (stops <script> injection)
 function sanitize(input) {
@@ -47,7 +52,7 @@ const userTokens = {}; // in-memory storage, replace with DB in production
 
 async function sendPushNotificationToAll(payload) {
   try {
-    const users = await _find({ fcmTokens: { $exists: true, $ne: [] } });
+    const users = await User.find({ fcmTokens: { $exists: true, $ne: [] } });
     const tokens = users.flatMap(user => user.fcmTokens);
 
     if (tokens.length === 0) {
@@ -55,7 +60,7 @@ async function sendPushNotificationToAll(payload) {
       return;
     }
 
-    const response = await messaging().sendToDevice(tokens, payload);
+    const response = await admin.messaging().sendToDevice(tokens, payload);
     console.log('Push notification sent:', response);
   } catch (err) {
     console.error('Error sending push notification:', err);
@@ -68,7 +73,7 @@ app.post('/api/register-token', async (req, res) => {
   if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
 
   try {
-    const user = await findOne({ username: userId });
+    const user = await User.findOne({ username: userId });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Add token only if not already present
@@ -107,7 +112,7 @@ io.on("connection", (socket) => {
   // 🟩 SIGN UP
   socket.on("sign up", async ({ username, password }) => {
     try {
-      const exists = await findOne({ username });
+      const exists = await User.findOne({ username });
       if (exists) return socket.emit("sign up fail", "❌ Username already taken");
 
       const newUser = new User({ username, password });
@@ -122,13 +127,13 @@ io.on("connection", (socket) => {
   // 🟦 SIGN IN
   socket.on("sign in", async ({ username, password }) => {
     try {
-      const user = await findOne({ username });
+      const user = await User.findOne({ username });
       if (!user || user.password !== password)
         return socket.emit("sign in fail", "❌ Invalid username or password.");
 
       socket.emit("sign in success", username);
 
-      const msgs = await find({}).limit(100);
+      const msgs = await Message.find({}).limit(100);
       socket.emit("previous messages", msgs);
     } catch (err) {
       console.error("Sign-in error:", err);
@@ -190,20 +195,20 @@ io.on("connection", (socket) => {
       date: new Date().toLocaleDateString(),
     };
 
-    const saved = await create(fullMsg);
+    const saved = await Message.create(fullMsg);
     io.emit("chat message", saved);
   });
 
   // 🗑️ DELETE MESSAGE
   socket.on("delete message", async (id) => {
-    await findByIdAndDelete(id);
+    await Message.findByIdAndDelete(id);
     io.emit("message deleted", id);
   });
 
   // ✏️ EDIT MESSAGE (with sanitize)
   socket.on("edit message", async ({ id, newText }) => {
     newText = sanitize(newText);
-    const updated = await findByIdAndUpdate(id, { text: newText }, { new: true });
+    const updated = await Message.findByIdAndUpdate(id, { text: newText }, { new: true });
     io.emit("message edited", updated);
   });
 });
@@ -215,14 +220,14 @@ async function sendPushNotification(userId, payload) {
   }
   const tokens = userTokens[userId];
   try {
-    const response = await messaging().sendToDevice(tokens, payload);
+    const response = await admin.messaging().sendToDevice(tokens, payload);
     console.log(`Sent push notification to user ${userId}`, response);
   } catch (err) {
     console.error('Error sending push notification:', err);
   }
 }
 
-const saved = await create(fullMsg);
+const saved = await Message.create(fullMsg);
 io.emit("chat message", saved);
 
 // Prepare notification payload
