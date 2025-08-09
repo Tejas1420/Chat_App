@@ -65,27 +65,30 @@ async function sendPushNotificationToAll(payload) {
       return;
     }
 
-const response = await admin.messaging().sendMulticast({
-  tokens: tokens,
-  notification: {
-    title: `New message from ${saved.username}`,
-    body: saved.text,
-  },
-  webpush: {
-    fcmOptions: {
-      link: 'https://chat-app-4x3l.onrender.com/',
-    },
-    notification: {
-      icon: '/icon-192.png',
-    },
-  },
-});
+    const message = {
+      tokens: tokens,
+      notification: {
+        title: payload.notification.title,
+        body: payload.notification.body,
+      },
+      webpush: {
+        fcmOptions: {
+          link: payload.notification.click_action,
+        },
+        notification: {
+          icon: payload.notification.icon,
+        },
+      },
+    };
 
+    const response = await admin.messaging().sendMulticast(message);
     console.log('Push notification sent:', response);
   } catch (err) {
     console.error('Error sending push notification:', err);
   }
 }
+
+
 
 
 app.post('/api/register-token', async (req, res) => {
@@ -215,20 +218,20 @@ io.on("connection", (socket) => {
     date: new Date().toLocaleDateString(),
   };
 
-  const saved = await Message.create(fullMsg);
-  io.emit("chat message", saved);
+const saved = await Message.create(fullMsg);
+io.emit("chat message", saved);
 
-  // Prepare notification payload
-  const payload = {
-    notification: {
-      title: `New message from ${saved.username}`,
-      body: saved.text,
-      click_action: 'https://chat-app-4x3l.onrender.com/',
-      icon: '/icon-192.png',
-    },
-  };
+const payload = {
+  notification: {
+    title: `New message from ${saved.username}`,
+    body: saved.text,
+    click_action: 'https://chat-app-4x3l.onrender.com/',
+    icon: '/icon-192.png',
+  },
+};
 
-  sendPushNotificationToAll(payload);
+sendPushNotificationToAll(payload);
+
 });
 });
 
