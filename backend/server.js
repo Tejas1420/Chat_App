@@ -219,6 +219,13 @@ io.on("connection", (socket) => {
   });
 
 socket.on("chat message notify", async (msg) => {
+  const fullMsg = {
+    username: msg.username,
+    text: sanitize(msg.text),
+    time: new Date().toLocaleTimeString(),
+    date: new Date().toLocaleDateString(),
+  };
+
   const saved = await Message.create(fullMsg);
   io.emit("chat message", saved);
 
@@ -227,15 +234,14 @@ socket.on("chat message notify", async (msg) => {
     notification: {
       title: `New message from ${saved.username}`,
       body: saved.text,
-      click_action: 'https://chat-app-4x3l.onrender.com/', // update with your frontend URL
-      icon: '/icon-192.png'  // make sure this icon exists in frontend folder
-    }
+      click_action: 'https://chat-app-4x3l.onrender.com/',
+      icon: '/icon-192.png',
+    },
   };
 
-// Send push notification to all users
   sendPushNotificationToAll(payload);
-
 });
+
 
 async function sendPushNotification(userId, payload) {
   if (!userTokens[userId]) {
