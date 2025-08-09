@@ -7,7 +7,12 @@ import dotenv from "dotenv";
 import Message from "./models/Message.js";
 import User from "./models/user.js";  // Make sure filenames have .js extension
 import admin from "firebase-admin";
-import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
+import { readFileSync } from "fs";
+import path from "path";
+
+const serviceAccountPath = path.resolve("./backend/serviceAccountKey.json");
+const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
+
 
 dotenv.config();
 
