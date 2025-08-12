@@ -9,6 +9,7 @@ import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getMessaging } from "firebase-admin/messaging";
 
 
 const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
@@ -81,7 +82,7 @@ async function sendPushNotificationToAll(payload) {
       },
     };
 
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await getMessaging().sendEachForMulticast(message);
     console.log('Push notification sent:', response);
   } catch (err) {
     console.error('Error sending push notification:', err);
