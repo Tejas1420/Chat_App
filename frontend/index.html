@@ -17,6 +17,11 @@
   <h2>🟩 Sign Up</h2>
   <input id="signup-username" placeholder="Username" />
   <input id="signup-password" type="password" placeholder="Password" />
+  <input id="signup-confirm-password" type="password" placeholder="Confirm Password" />
+  <label>
+    <input type="checkbox" id="signup-show-password" onclick="togglePassword('signup-password', 'signup-confirm-password', this)">
+    Show Password
+  </label>
   <button onclick="signUp()">Sign Up</button>
   <p>Already have an account? <button onclick="showScreen('signin-screen')">Sign In</button></p>
 </div>
@@ -26,6 +31,10 @@
   <h2>🟦 Sign In</h2>
   <input id="signin-username" placeholder="Username" />
   <input id="signin-password" type="password" placeholder="Password" />
+  <label>
+    <input type="checkbox" id="signin-show-password" onclick="togglePassword('signin-password', null, this)">
+    Show Password
+  </label>
   <button onclick="signIn()">Sign In</button>
   <p>New here? <button onclick="showScreen('signup-screen')">Sign Up</button></p>
 </div>
@@ -34,6 +43,11 @@
 <div id="chat-screen" class="screen">
   <h2>💬 Group Chat</h2>
   <button id="darkModeToggle">🌙 Toggle Dark Mode</button>
+  <h3>Online Users</h3>
+<ul id="online-users"></ul>
+
+<p id="typing-indicator" style="color: gray; font-style: italic;"></p>
+  <h3>Messages</h3>
   <ul id="messages"></ul>
   <form onsubmit="sendMessage(); return false;">
     <input id="message" autocomplete="off" placeholder="Type your message..." />
@@ -89,6 +103,17 @@ document.addEventListener('DOMContentLoaded', function() {
     saveTheme(document.body.classList.contains('dark-mode'));
   });
 });
+
+// Show the Password toggle checkbox
+
+function togglePassword(id1, id2, checkbox) {
+  const field1 = document.getElementById(id1);
+  if (field1) field1.type = checkbox.checked ? "text" : "password";
+  if (id2) {
+    const field2 = document.getElementById(id2);
+    if (field2) field2.type = checkbox.checked ? "text" : "password";
+  }
+}
 </script>
 
 </body>

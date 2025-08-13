@@ -4,13 +4,12 @@ import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import Message from "./models/Message.js";
-import User from "./models/user.js";  // Make sure filenames have .js extension
+import User from "./models/user.js";
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getMessaging } from "firebase-admin/messaging";
-
 
 const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
@@ -20,10 +19,8 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
-
 app.use(express.json());
 app.use(express.static("public"));
-
 
 const server = http.createServer(app);
 const io = new Server(server);
@@ -43,7 +40,7 @@ mongoose.connection.on("error", (err) => {
 
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// 🛡️ Sanitize function (stops <script> injection)
+// 🛡️ Sanitize function
 function sanitize(input) {
   if (typeof input !== "string") return input;
   return input
@@ -54,7 +51,9 @@ function sanitize(input) {
     .replace(/'/g, "&#039;");
 }
 
-const userTokens = {}; // in-memory storage, replace with DB in production
+const userTokens = {};
+const userData = {};
+const onlineUsers = new Set(); // ✅ online users
 
 async function sendPushNotificationToAll(payload) {
   try {
@@ -67,18 +66,14 @@ async function sendPushNotificationToAll(payload) {
     }
 
     const message = {
-      tokens: tokens,
+      tokens,
       notification: {
         title: payload.notification.title,
         body: payload.notification.body,
       },
       webpush: {
-        fcmOptions: {
-          link: payload.notification.click_action,
-        },
-        notification: {
-          icon: payload.notification.icon,
-        },
+        fcmOptions: { link: payload.notification.click_action },
+        notification: { icon: payload.notification.icon },
       },
     };
 
@@ -89,9 +84,6 @@ async function sendPushNotificationToAll(payload) {
   }
 }
 
-
-
-
 app.post('/api/register-token', async (req, res) => {
   const { userId, token } = req.body;
   if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
@@ -100,7 +92,6 @@ app.post('/api/register-token', async (req, res) => {
     const user = await User.findOne({ username: userId });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Add token only if not already present
     if (!user.fcmTokens.includes(token)) {
       user.fcmTokens.push(token);
       await user.save();
@@ -114,17 +105,15 @@ app.post('/api/register-token', async (req, res) => {
   }
 });
 
-
-// 🛡️ Spam tracking
-const userData = {};
-
 io.on("connection", (socket) => {
   console.log("📶 A user connected");
 
-  // 🌐 Detect client IPs
+    // 🌐 Detect client IPs
   const realIP = socket.handshake.headers["cf-connecting-ip"];
   const forwarded = socket.handshake.headers["x-forwarded-for"];
   const address = socket.handshake.address;
+
+
   const ua = socket.handshake.headers["user-agent"] || "Unknown";
 
   console.log("🔍 Connection details:");
@@ -132,6 +121,7 @@ io.on("connection", (socket) => {
   console.log("x-forwarded-for:", forwarded || "None");
   console.log("handshake.address:", address || "None");
   console.log("   User-Agent:", ua);
+
 
   // 🟩 SIGN UP
   socket.on("sign up", async ({ username, password }) => {
@@ -141,9 +131,8 @@ io.on("connection", (socket) => {
 
       const newUser = new User({ username, password });
       await newUser.save();
-
       socket.emit("sign up success");
-    } catch (err) {
+    } catch {
       socket.emit("sign up fail", "❌ Server error during sign-up");
     }
   });
@@ -155,8 +144,11 @@ io.on("connection", (socket) => {
       if (!user || user.password !== password)
         return socket.emit("sign in fail", "❌ Invalid username or password.");
 
-      socket.emit("sign in success", username);
+      socket.data.username = username; // ✅ store username
+      onlineUsers.add(username);       // ✅ add to online list
+      io.emit("online users", Array.from(onlineUsers));
 
+      socket.emit("sign in success", username);
       const msgs = await Message.find({}).limit(100);
       socket.emit("previous messages", msgs);
     } catch (err) {
@@ -165,128 +157,108 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 🟨 CHAT MESSAGE (with anti-spam + sanitize)
+  // 🟨 CHAT MESSAGE
   socket.on("chat message", async (msg) => {
-  const now = Date.now();
-  const username = msg.username;
+    const now = Date.now();
+    const username = msg.username;
 
-  if (!userData[username]) {
-    userData[username] = {
-      lastMsgTime: 0,
-      lastMsgText: "",
-      spamCount: 0,
-      mutedUntil: 0,
+    if (!userData[username]) {
+      userData[username] = { lastMsgTime: 0, lastMsgText: "", spamCount: 0, mutedUntil: 0 };
+    }
+
+    const user = userData[username];
+
+    if (now < user.mutedUntil) {
+      return socket.emit("spam warning", "🔇 You are muted for spamming. Please wait.");
+    }
+
+    if (now - user.lastMsgTime < 2000) {
+      user.spamCount++;
+      if (user.spamCount >= 3) {
+        user.mutedUntil = now + 30000;
+        user.spamCount = 0;
+        return socket.emit("spam warning", "🚫 You’ve been muted for 30s (spamming too fast).");
+      }
+      return socket.emit("spam warning", "⛔ Too fast! Wait before sending again.");
+    }
+
+    if (msg.text.length > 300) {
+      return socket.emit("spam warning", "📏 Message too long! Max 300 characters.");
+    }
+
+    if (msg.text === user.lastMsgText) {
+      return socket.emit("spam warning", "⚠️ Duplicate message blocked.");
+    }
+
+    user.lastMsgTime = now;
+    user.lastMsgText = msg.text;
+    user.spamCount = 0;
+
+    const fullMsg = {
+      username,
+      text: sanitize(msg.text),
+      time: new Date().toLocaleTimeString(),
+      date: new Date().toLocaleDateString(),
     };
-  }
 
-  const user = userData[username];
+    const saved = await Message.create(fullMsg);
+    io.emit("chat message", saved);
 
-  // Check mute
-  if (now < user.mutedUntil) {
-    return socket.emit("spam warning", "🔇 You are muted for spamming. Please wait.");
-  }
+    const payload = {
+      notification: {
+        title: `New message from ${saved.username}`,
+        body: saved.text,
+        click_action: 'https://chat-app-4x3l.onrender.com/',
+        icon: '/icon-192.png',
+      },
+    };
 
-  // Rate limit (1 msg / 2s)
-  if (now - user.lastMsgTime < 2000) {
-    user.spamCount++;
-    if (user.spamCount >= 3) {
-      user.mutedUntil = now + 30000; // 30s mute
-      user.spamCount = 0;
-      return socket.emit("spam warning", "🚫 You’ve been muted for 30s (spamming too fast).");
+    sendPushNotificationToAll(payload);
+  });
+
+  // ✅ Typing indicators
+  socket.on("typing", () => {
+    if (socket.data.username) {
+      socket.broadcast.emit("typing", socket.data.username);
     }
-    return socket.emit("spam warning", "⛔ Too fast! Wait before sending again.");
-  }
+  });
 
-  // Length limit
-  if (msg.text.length > 300) {
-    return socket.emit("spam warning", "📏 Message too long! Max 300 characters.");
-  }
-
-  // Duplicate detection
-  if (msg.text === user.lastMsgText) {
-    return socket.emit("spam warning", "⚠️ Duplicate message blocked.");
-  }
-
-  // Passed checks → sanitize + save
-  user.lastMsgTime = now;
-  user.lastMsgText = msg.text;
-  user.spamCount = 0;
-
-  const fullMsg = {
-    username,
-    text: sanitize(msg.text),
-    time: new Date().toLocaleTimeString(),
-    date: new Date().toLocaleDateString(),
-  };
-
-const saved = await Message.create(fullMsg);
-io.emit("chat message", saved);
-
-const payload = {
-  notification: {
-    title: `New message from ${saved.username}`,
-    body: saved.text,
-    click_action: 'https://chat-app-4x3l.onrender.com/',
-    icon: '/icon-192.png',
-  },
-};
-
-sendPushNotificationToAll(payload);
-
-});
-socket.on("delete message", async (id) => {
-  try {
-    // Delete from DB
-    await Message.findByIdAndDelete(id);
-
-    // Notify all clients that message is deleted
-    io.emit("message deleted", id);
-  } catch (err) {
-    console.error("Error deleting message:", err);
-    socket.emit("error", "Failed to delete message");
-  }
-});
-socket.on("edit message", async ({ id, newText }) => {
-  try {
-    // Sanitize the new text (to avoid script injection)
-    const sanitizedText = sanitize(newText);
-
-    // Update the message in DB
-    const updatedMsg = await Message.findByIdAndUpdate(
-      id,
-      { text: sanitizedText },
-      { new: true } // to return updated doc
-    );
-
-    if (updatedMsg) {
-      // Notify all clients about the edited message
-      io.emit("message edited", updatedMsg);
-    } else {
-      socket.emit("error", "Message not found");
+  socket.on("stop typing", () => {
+    if (socket.data.username) {
+      socket.broadcast.emit("stop typing", socket.data.username);
     }
-  } catch (err) {
-    console.error("Error editing message:", err);
-    socket.emit("error", "Failed to edit message");
-  }
+  });
+
+  // Delete message
+  socket.on("delete message", async (id) => {
+    try {
+      await Message.findByIdAndDelete(id);
+      io.emit("message deleted", id);
+    } catch (err) {
+      console.error("Error deleting message:", err);
+    }
+  });
+
+  // Edit message
+  socket.on("edit message", async ({ id, newText }) => {
+    try {
+      const sanitizedText = sanitize(newText);
+      const updatedMsg = await Message.findByIdAndUpdate(id, { text: sanitizedText }, { new: true });
+      if (updatedMsg) {
+        io.emit("message edited", updatedMsg);
+      }
+    } catch (err) {
+      console.error("Error editing message:", err);
+    }
+  });
+
+  // Handle disconnect
+  socket.on("disconnect", () => {
+    if (socket.data.username) {
+      onlineUsers.delete(socket.data.username);
+      io.emit("online users", Array.from(onlineUsers));
+    }
+  });
 });
-
-});
-
-async function sendPushNotification(userId, payload) {
-  if (!userTokens[userId]) {
-    console.log(`No tokens registered for user ${userId}`);
-    return;
-  }
-  const tokens = userTokens[userId];
-  try {
-    const response = await admin.messaging().sendToDevice(tokens, payload);
-    console.log(`Sent push notification to user ${userId}`, response);
-  } catch (err) {
-    console.error('Error sending push notification:', err);
-  }
-}
-
 
 server.listen(3000, () => console.log("🌐 Server running on http://localhost:3000"));
-
-//made by tejas singh

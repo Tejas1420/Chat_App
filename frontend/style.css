@@ -61,3 +61,51 @@ body.dark-mode .bubble {
 body.dark-mode .meta {
   color: #aaaaaa;
 }
+
+/* Online Users List */
+#online-users {
+  list-style: none;
+  padding: 5px;
+  margin: 10px 0;
+  background: #fff;
+  border-radius: 5px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+#online-users li {
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+#online-users li:last-child {
+  border-bottom: none;
+}
+
+#online-users li::before {
+  content: "🟢 ";
+  color: limegreen;
+}
+
+/* Typing Indicator */
+#typing-indicator {
+  margin: 8px 0;
+  font-size: 0.9em;
+  color: #555;
+  font-style: italic;
+}
+
+/* Dark Mode Adjustments */
+body.dark-mode #online-users {
+  background: #1e1e1e;
+  border: 1px solid #333;
+}
+
+body.dark-mode #online-users li {
+  border-bottom: 1px solid #333;
+}
+
+body.dark-mode #typing-indicator {
+  color: #aaa;
+}
+
