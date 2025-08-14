@@ -10,6 +10,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getMessaging } from "firebase-admin/messaging";
+import rateLimit from "express-rate-limit";
 
 const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
@@ -55,6 +56,15 @@ const userTokens = {};
 const userData = {};
 const onlineUsers = new Set(); // ✅ online users
 
+// Rate limiter for /api/register-token
+const registerTokenLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+
 async function sendPushNotificationToAll(payload) {
   try {
     const users = await User.find({ fcmTokens: { $exists: true, $ne: [] } });
@@ -84,9 +94,11 @@ async function sendPushNotificationToAll(payload) {
   }
 }
 
-app.post('/api/register-token', async (req, res) => {
+app.post('/api/register-token', registerTokenLimiter, async (req, res) => {
   const { userId, token } = req.body;
   if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
+
+if (typeof userId !== "string") return res.status(400).json({ error: 'Invalid userId' });
 
   try {
     const user = await User.findOne({ username: userId });
@@ -97,7 +109,7 @@ app.post('/api/register-token', async (req, res) => {
       await user.save();
     }
 
-    console.log(`Registered token for user ${userId}:`, token);
+    console.log(`Registered token for user %s:`, userId, token);
     res.json({ success: true });
   } catch (err) {
     console.error('Error registering token:', err);
