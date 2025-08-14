@@ -7,4 +7,5 @@ const messageSchema = new mongoose.Schema({
   date: String
 });
 
-module.exports = mongoose.model("Message", messageSchema);
+export default mongoose.model("Message", messageSchema);
+// made by tejas singh

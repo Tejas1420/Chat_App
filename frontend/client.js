@@ -136,3 +136,5 @@ socket.on("online users", (users) => {
 });
 
 Object.assign(window, { signUp, signIn, sendMessage, showScreen, addMessage, deleteMessage, editMessage });
+
+// made by tejas singh
