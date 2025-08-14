@@ -1,6 +1,7 @@
 {
   "name": "group-chat",
   "version": "5.3.2",
+  "license": "Apache-2.0",
   "main": "backend/server.js",
   "type": "module",
 
