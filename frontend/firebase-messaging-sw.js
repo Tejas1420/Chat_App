@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: process.env.FIREBASE_SECRET,
+  apiKey: AIzaSyARs3DqyyA_HOux9zsMA99TQL1qlzDNjcY,
   authDomain: "chat-app-4x3l.firebaseapp.com",
   projectId: "chat-app-4x3l",
   storageBucket: "chat-app-4x3l.firebasestorage.app",
