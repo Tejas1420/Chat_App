@@ -75,7 +75,7 @@ function addMessage(msg) {
       <div class="text">${msg.text}</div>
       ${msg.username === currentUser ? `
         <button onclick="deleteMessage('${msg._id}')">🗑️</button>
-        <button onclick="editMessage('${msg._id}', '${msg.text.replace(/'/g, "\\'")}')">✏️</button>
+                <button onclick="editMessage('${msg._id}', '${msg.text.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')">✏️</button>
       ` : ''}
     </div>
   `;
