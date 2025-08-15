@@ -18,8 +18,10 @@
   <input id="signup-username" placeholder="Username" /> <br>
   <input id="signup-password" type="password" placeholder="Password" /> <br>
   <input id="signup-confirm-password" type="password" placeholder="Confirm Password" /> <br>
+  <p>
   <input type="checkbox" id="signup-show-password" onclick="togglePassword('signup-password', 'signup-confirm-password', this)">
   Show Password
+  </p>
   <br>
   <button onclick="signUp()">Sign Up</button>
   <p>
@@ -33,8 +35,10 @@
   <h2>🟦 Sign In</h2>
   <input id="signin-username" placeholder="Username" /> <br>
   <input id="signin-password" type="password" placeholder="Password" /> <br>
+<p>
   <input type="checkbox" id="signin-show-password" onclick="togglePassword('signin-password', null, this)">
   Show Password
+</p>
   <br>
   <button onclick="signIn()">Sign In</button>
   <p>
@@ -54,6 +58,14 @@
 
   <!-- Typing Indicator -->
   <p id="typing-indicator" style="color: gray; font-style: italic;"></p>
+
+  <h3>Friends</h3>
+<ul id="friends-list"></ul>
+
+<h3>Friend Requests</h3>
+<ul id="friend-requests"></ul>
+
+<button onclick="sendFriendRequest()">➕ Add Friend</button>
 
   <!-- Messages -->
   <h3>Messages</h3>

@@ -6,7 +6,9 @@ const userSchema = new mongoose.Schema({
   fcmTokens: {
     type: [String],      // Array of strings to store multiple tokens
     default: []
-  }
+  },
+  friends: { type: [String], default: [] },
+  friendRequests: { type: [String], default: [] }
 });
 
 export default mongoose.model('User', userSchema);

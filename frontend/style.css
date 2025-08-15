@@ -113,4 +113,23 @@ input[type="checkbox"] {
   vertical-align: middle;
 }
 
+#friends-list, #friend-requests {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  background: #fff;
+  border-radius: 5px;
+}
+#friends-list li, #friend-requests li {
+  padding: 5px;
+  border-bottom: 1px solid #ddd;
+}
+#friends-list li:last-child, #friend-requests li:last-child {
+  border-bottom: none;
+}
+body.dark-mode #friends-list, body.dark-mode #friend-requests {
+  background: #1e1e1e;
+  border: 1px solid #333;
+}
+
 /* made by tejas singh */

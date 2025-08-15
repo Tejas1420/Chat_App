@@ -169,6 +169,62 @@ io.on("connection", (socket) => {
     }
   });
 
+  // 📩 Send Friend Request
+socket.on("send friend request", async (toUser) => {
+  const fromUser = socket.data.username;
+  if (!fromUser || fromUser === toUser) return;
+
+  const target = await User.findOne({ username: toUser });
+  if (!target) return socket.emit("error", "User not found");
+
+  if (!target.friendRequests.includes(fromUser) && !target.friends.includes(fromUser)) {
+    target.friendRequests.push(fromUser);
+    await target.save();
+    io.emit("sidebar update", toUser); // tell target user to refresh sidebar
+  }
+});
+
+// ✅ Accept Friend Request
+socket.on("accept friend request", async (fromUser) => {
+  const toUser = socket.data.username;
+  const me = await User.findOne({ username: toUser });
+  const sender = await User.findOne({ username: fromUser });
+
+  if (me && sender && me.friendRequests.includes(fromUser)) {
+    me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
+    sender.friendRequests = sender.friendRequests.filter(u => u !== toUser);
+    me.friends.push(fromUser);
+    sender.friends.push(toUser);
+    await me.save();
+    await sender.save();
+    io.emit("sidebar update", toUser);
+    io.emit("sidebar update", fromUser);
+  }
+});
+
+// ❌ Decline Friend Request
+socket.on("decline friend request", async (fromUser) => {
+  const toUser = socket.data.username;
+  const me = await User.findOne({ username: toUser });
+  if (me && me.friendRequests.includes(fromUser)) {
+    me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
+    await me.save();
+    io.emit("sidebar update", toUser);
+  }
+});
+
+// 📜 Send sidebar data
+socket.on("get sidebar", async () => {
+  const me = await User.findOne({ username: socket.data.username });
+  if (me) {
+    socket.emit("sidebar data", {
+      friends: me.friends,
+      friendRequests: me.friendRequests
+    });
+  }
+});
+
+
   // 🟨 CHAT MESSAGE
   socket.on("chat message", async (msg) => {
     const now = Date.now();

@@ -34,12 +34,26 @@ socket.on("sign in success", async (username) => {
   currentUser = username;
   alert("✅ Welcome, " + username + "!");
   showScreen("chat-screen");
-
+  socket.emit("get sidebar");
   try {
     await registerForPush(currentUser);
   } catch (err) {
     console.error('Push registration failed:', err);
   }
+});
+
+socket.on("sidebar data", ({ friends, friendRequests }) => {
+  const friendsList = document.getElementById("friends-list");
+  const requestsList = document.getElementById("friend-requests");
+
+  friendsList.innerHTML = friends.map(f => `<li>${f}</li>`).join("");
+  requestsList.innerHTML = friendRequests.map(r => `
+    <li>
+      ${r}
+      <button onclick="acceptFriend('${r}')">✅</button>
+      <button onclick="declineFriend('${r}')">❌</button>
+    </li>
+  `).join("");
 });
 
 function sendMessage() {
@@ -102,6 +116,18 @@ function editMessage(id, oldText) {
     socket.emit("edit message", { id, newText });
   }
 }
+
+function sendFriendRequest() {
+  const target = prompt("Enter username to friend:");
+  if (target) socket.emit("send friend request", target);
+}
+function acceptFriend(user) {
+  socket.emit("accept friend request", user);
+}
+function declineFriend(user) {
+  socket.emit("decline friend request", user);
+}
+Object.assign(window, { sendFriendRequest, acceptFriend, declineFriend });
 
 // ✅ Typing indicator handling
 document.getElementById("message").addEventListener("input", () => {
