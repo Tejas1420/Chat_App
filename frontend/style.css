@@ -109,4 +109,8 @@ body.dark-mode #typing-indicator {
   color: #aaa;
 }
 
+input[type="checkbox"] {
+  vertical-align: middle;
+}
+
 /* made by tejas singh */
