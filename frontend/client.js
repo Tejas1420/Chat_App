@@ -89,8 +89,38 @@ i("message").addEventListener("input", () => {
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => socket.emit("stop typing"), 1000);
 });
-socket.on("typing", u => { if (u !== currentUser) i("typing-indicator").textContent = `${u} is typing...`; });
-socket.on("stop typing", () => i("typing-indicator").textContent = "");
+
+// --- New multi-user typing indicator logic ---
+const typingUsers = new Set();
+
+socket.on("typing", (username) => {
+  if (username !== currentUser) {
+    typingUsers.add(username);
+    updateTypingIndicator();
+  }
+});
+
+socket.on("stop typing", (username) => {
+  typingUsers.delete(username);
+  updateTypingIndicator();
+});
+
+function updateTypingIndicator() {
+  const indicator = i("typing-indicator");
+  const users = [...typingUsers];
+
+  if (users.length === 0) {
+    indicator.textContent = "";
+  } else if (users.length === 1) {
+    indicator.textContent = `${users[0]} is typing...`;
+  } else if (users.length === 2) {
+    indicator.textContent = `${users[0]} and ${users[1]} are typing...`;
+  } else if (users.length === 3) {
+    indicator.textContent = `${users[0]}, ${users[1]} and ${users[2]} are typing...`;
+  } else {
+    indicator.textContent = "Many people are typing...";
+  }
+}
 
 // ✅ Online users
 socket.on("online users", users => {
