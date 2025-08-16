@@ -57,7 +57,10 @@ function sendMessage() {
 socket.on("previous messages", msgs => { i("messages").innerHTML = ""; msgs.forEach(addMessage); });
 socket.on("chat message", addMessage);
 socket.on("message deleted", id => q(id)?.remove());
-socket.on("message edited", msg => q(msg._id)?.querySelector(".text").textContent = msg.text);
+socket.on("message edited", msg => {
+  const el = q(msg._id)?.querySelector(".text");
+  if (el) el.textContent = msg.text;
+});
 
 function addMessage(msg) {
   const mine = msg.username === currentUser;
