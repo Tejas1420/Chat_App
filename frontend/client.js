@@ -1,5 +1,12 @@
 // ✅ Socket setup (local or render)
 const socket = io(location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
+
+// ✅ Helpers
+const i = id => document.getElementById(id);
+const q = id => document.getElementById(id);
+const v = id => i(id).value;
+function setList(id, arr) { i(id).innerHTML = arr.join(""); }
+
 let currentUser = "";
 let typingTimeout;
 
@@ -129,12 +136,6 @@ function updateTypingIndicator() {
 socket.on("online users", users => {
   setList("online-users", users.map(u => `<li style="font-weight:${u===currentUser?"bold":"normal"}">${u}</li>`));
 });
-
-// ✅ Helpers
-const i = id => document.getElementById(id);
-const q = id => document.getElementById(id);
-const v = id => i(id).value;
-function setList(id, arr) { i(id).innerHTML = arr.join(""); }
 
 // Export funcs to window (for HTML onclick)
 Object.assign(window, { signUp, signIn, sendMessage, showScreen, addMessage, deleteMessage, editMessage, sendFriendRequest, acceptFriend, declineFriend });
