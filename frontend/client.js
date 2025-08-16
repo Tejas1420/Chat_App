@@ -11,12 +11,16 @@ let currentUser = "";
 let typingTimeout;
 
 // ✅ Service Worker + Push
+import { registerForPush } from './firebase-init.js';
+
+let swReady = Promise.resolve();
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then(reg => console.log("SW registered:", reg.scope))
+  swReady = navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => navigator.serviceWorker.ready)
+    .then(() => console.log("SW registered and ready"))
     .catch(console.error);
 }
-import { registerForPush } from './firebase-init.js';
 
 // ✅ Screen switcher
 function showScreen(id) {
@@ -40,7 +44,12 @@ socket.on("sign in success", async (u) => {
   alert("✅ Welcome, " + u);
   showScreen("chat-screen");
   socket.emit("get sidebar");
-  try { await registerForPush(u); } catch (e) { console.error(e); }
+  try {
+    await swReady; // Wait for service worker to be ready
+    await registerForPush(u);
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 // ✅ Sidebar
