@@ -132,4 +132,12 @@ body.dark-mode #friends-list, body.dark-mode #friend-requests {
   border: 1px solid #333;
 }
 
+.selector
+{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
 /* made by tejas singh */
