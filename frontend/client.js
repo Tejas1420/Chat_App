@@ -39,6 +39,7 @@ function signIn() {
 }
 
 // ✅ After login
+// ✅ After login
 socket.on("sign in success", async (u) => {
   currentUser = u;
   alert("✅ Welcome, " + u);
@@ -52,6 +53,21 @@ socket.on("sign in success", async (u) => {
   }
 });
 
+// ✅ After sign up
+socket.on("sign up success", () => {
+  alert("✅ Signed Up! Now Sign In");
+  showScreen("signin-screen");
+});
+socket.on("sign in error", (err) => {
+  alert("❌ " + err);
+  i("signin-password").value = "";
+});
+socket.on("sign up error", (err) => {
+  alert("❌ " + err);
+  i("signup-password").value = "";
+  i("signup-confirm-password").value = "";
+});
+
 // ✅ Sidebar
 socket.on("sidebar data", ({ friends, friendRequests }) => {
   setList("friends-list", friends.map(f => `<li>${f}</li>`));
@@ -61,6 +77,14 @@ socket.on("sidebar data", ({ friends, friendRequests }) => {
       <button onclick="declineFriend('${r}')">❌</button>
     </li>`));
 });
+
+// 🔄 Refresh sidebar when server requests it
+socket.on("sidebar update", (user) => {
+  if (user === currentUser) {
+    socket.emit("get sidebar");
+  }
+});
+
 
 // ✅ Chat
 function sendMessage() {

@@ -17,16 +17,16 @@
 <body>
 
 <!-- 🟩 Sign Up Screen -->
- <div class="selector">
-  
-</div>
+
 <div id="signup-screen" class="screen active">
   <h2>🟩 Sign Up</h2>
   <input id="signup-username" placeholder="Username" /> <br>
   <input id="signup-password" type="password" placeholder="Password" /> <br>
   <input id="signup-confirm-password" type="password" placeholder="Confirm Password" /> <br>
-<input id="signup-show-password" type="checkbox">
-<label for="signup-show-password">Show password</label>
+
+  <input id="signup-show-password" type="checkbox"
+         onchange="togglePassword('signup-password','signup-confirm-password',this)">
+  <label for="signup-show-password">Show password</label>
 
   <br>
   <button onclick="signUp()">Sign Up</button>
@@ -41,9 +41,10 @@
   <h2>🟦 Sign In</h2>
   <input id="signin-username" placeholder="Username" /> <br>
   <input id="signin-password" type="password" placeholder="Password" /> <br>
-<input id="signup-show-password" type="checkbox">
-<label for="signup-show-password">Show password</label>
 
+  <input id="signin-show-password" type="checkbox"
+         onchange="togglePassword('signin-password',null,this)">
+  <label for="signin-show-password">Show password</label>
 
   <br>
   <button onclick="signIn()">Sign In</button>
@@ -66,12 +67,11 @@
   <p id="typing-indicator" style="color: gray; font-style: italic;"></p>
 
   <h3>Friends</h3>
-<ul id="friends-list"></ul>
+  <ul id="friends-list"></ul>
 
-<h3>Friend Requests</h3>
-<ul id="friend-requests"></ul>
-
-<button onclick="sendFriendRequest()">➕ Add Friend</button>
+  <h3>Friend Requests</h3>
+  <ul id="friend-requests"></ul>
+  <button onclick="sendFriendRequest()">➕ Add Friend</button>
 
   <!-- Messages -->
   <h3>Messages</h3>
@@ -136,4 +136,3 @@
 </html>
 
 <!-- Made by Tejas Singh -->
-<!-- This HTML file is the main entry point for the group chat application. It includes sign-up
