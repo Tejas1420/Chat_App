@@ -23,6 +23,9 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
+import helmet from "helmet";
+
+// Apply Helmet with CSP + frameguard
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -33,12 +36,21 @@ app.use(
         imgSrc: ["'self'", "data:"],
       },
     },
-    frameguard: { action: "deny" },          // Anti-clickjacking
-    xssFilter: true,                         // X-XSS-Protection (legacy but good)
-    noSniff: true,                           // X-Content-Type-Options: nosniff
-    hidePoweredBy: true,                     // Remove X-Powered-By: Express
-    hsts: { maxAge: 63072000, includeSubDomains: true, preload: true }, 
-    // Strict-Transport-Security (force HTTPS everywhere)
+    frameguard: { action: "deny" }, // Anti-clickjacking
+  })
+);
+
+// Extra protections (added separately in Helmet v7)
+app.use(helmet.xssFilter());      // X-XSS-Protection (legacy but fine)
+app.use(helmet.noSniff());        // X-Content-Type-Options: nosniff
+app.use(helmet.hidePoweredBy());  // Remove X-Powered-By
+
+// HSTS (safe: no preload, no subdomains)
+app.use(
+  helmet.hsts({
+    maxAge: 63072000,     // 2 years
+    includeSubDomains: false, // ⚠️ important: avoid www. issue
+    preload: false
   })
 );
 
