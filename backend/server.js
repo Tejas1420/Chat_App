@@ -23,14 +23,24 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", "data:"]
-  }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+      },
+    },
+    frameguard: { action: "deny" },          // Anti-clickjacking
+    xssFilter: true,                         // X-XSS-Protection (legacy but good)
+    noSniff: true,                           // X-Content-Type-Options: nosniff
+    hidePoweredBy: true,                     // Remove X-Powered-By: Express
+    hsts: { maxAge: 63072000, includeSubDomains: true, preload: true }, 
+    // Strict-Transport-Security (force HTTPS everywhere)
+  })
+);
 
 const server = http.createServer(app);
 const io = new Server(server);
