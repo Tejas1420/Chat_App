@@ -1,3 +1,6 @@
+.screen { display: none; } /* Moved to style.css */
+.screen.active { display: block; }
+
 body {
   font-family: Arial, sans-serif;
   background: #f0f0f0;

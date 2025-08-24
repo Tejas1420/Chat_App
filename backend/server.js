@@ -23,7 +23,6 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
-import helmet from "helmet";
 
 // Apply Helmet with CSP + frameguard
 app.use(
@@ -31,8 +30,8 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],   // no inline scripts needed now
+        styleSrc: ["'self'"],    // no inline styles needed now
         imgSrc: ["'self'", "data:"],
       },
     },
@@ -41,7 +40,6 @@ app.use(
 );
 
 // Extra protections (added separately in Helmet v7)
-app.use(helmet.xssFilter());      // X-XSS-Protection (legacy but fine)
 app.use(helmet.noSniff());        // X-Content-Type-Options: nosniff
 app.use(helmet.hidePoweredBy());  // Remove X-Powered-By
 
@@ -49,10 +47,11 @@ app.use(helmet.hidePoweredBy());  // Remove X-Powered-By
 app.use(
   helmet.hsts({
     maxAge: 63072000,     // 2 years
-    includeSubDomains: false, // ⚠️ important: avoid www. issue
+    includeSubDomains: false, // avoid www. issue
     preload: false
   })
 );
+
 
 const server = http.createServer(app);
 const io = new Server(server);
@@ -129,7 +128,7 @@ app.post('/api/register-token', registerTokenLimiter, async (req, res) => {
   const { userId, token } = req.body;
   if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
 
-if (typeof userId !== "string") return res.status(400).json({ error: 'Invalid userId' });
+  if (typeof userId !== "string") return res.status(400).json({ error: 'Invalid userId' });
 
   try {
     const user = await User.findOne({ username: userId });
@@ -151,7 +150,7 @@ if (typeof userId !== "string") return res.status(400).json({ error: 'Invalid us
 io.on("connection", (socket) => {
   console.log("📶 A user connected");
 
-    // 🌐 Detect client IPs
+  // 🌐 Detect client IPs
   const realIP = socket.handshake.headers["cf-connecting-ip"];
   const forwarded = socket.handshake.headers["x-forwarded-for"];
   const address = socket.handshake.address;
@@ -201,59 +200,59 @@ io.on("connection", (socket) => {
   });
 
   // 📩 Send Friend Request
-socket.on("send friend request", async (toUser) => {
-  const fromUser = socket.data.username;
-  if (!fromUser || fromUser === toUser) return;
+  socket.on("send friend request", async (toUser) => {
+    const fromUser = socket.data.username;
+    if (!fromUser || fromUser === toUser) return;
 
-  const target = await User.findOne({ username: toUser });
-  if (!target) return socket.emit("error", "User not found");
+    const target = await User.findOne({ username: toUser });
+    if (!target) return socket.emit("error", "User not found");
 
-  if (!target.friendRequests.includes(fromUser) && !target.friends.includes(fromUser)) {
-    target.friendRequests.push(fromUser);
-    await target.save();
-    io.emit("sidebar update", toUser); // tell target user to refresh sidebar
-  }
-});
+    if (!target.friendRequests.includes(fromUser) && !target.friends.includes(fromUser)) {
+      target.friendRequests.push(fromUser);
+      await target.save();
+      io.emit("sidebar update", toUser); // tell target user to refresh sidebar
+    }
+  });
 
-// ✅ Accept Friend Request
-socket.on("accept friend request", async (fromUser) => {
-  const toUser = socket.data.username;
-  const me = await User.findOne({ username: toUser });
-  const sender = await User.findOne({ username: fromUser });
+  // ✅ Accept Friend Request
+  socket.on("accept friend request", async (fromUser) => {
+    const toUser = socket.data.username;
+    const me = await User.findOne({ username: toUser });
+    const sender = await User.findOne({ username: fromUser });
 
-  if (me && sender && me.friendRequests.includes(fromUser)) {
-    me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
-    sender.friendRequests = sender.friendRequests.filter(u => u !== toUser);
-    me.friends.push(fromUser);
-    sender.friends.push(toUser);
-    await me.save();
-    await sender.save();
-    io.emit("sidebar update", toUser);
-    io.emit("sidebar update", fromUser);
-  }
-});
+    if (me && sender && me.friendRequests.includes(fromUser)) {
+      me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
+      sender.friendRequests = sender.friendRequests.filter(u => u !== toUser);
+      me.friends.push(fromUser);
+      sender.friends.push(toUser);
+      await me.save();
+      await sender.save();
+      io.emit("sidebar update", toUser);
+      io.emit("sidebar update", fromUser);
+    }
+  });
 
-// ❌ Decline Friend Request
-socket.on("decline friend request", async (fromUser) => {
-  const toUser = socket.data.username;
-  const me = await User.findOne({ username: toUser });
-  if (me && me.friendRequests.includes(fromUser)) {
-    me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
-    await me.save();
-    io.emit("sidebar update", toUser);
-  }
-});
+  // ❌ Decline Friend Request
+  socket.on("decline friend request", async (fromUser) => {
+    const toUser = socket.data.username;
+    const me = await User.findOne({ username: toUser });
+    if (me && me.friendRequests.includes(fromUser)) {
+      me.friendRequests = me.friendRequests.filter(u => u !== fromUser);
+      await me.save();
+      io.emit("sidebar update", toUser);
+    }
+  });
 
-// 📜 Send sidebar data
-socket.on("get sidebar", async () => {
-  const me = await User.findOne({ username: socket.data.username });
-  if (me) {
-    socket.emit("sidebar data", {
-      friends: me.friends,
-      friendRequests: me.friendRequests
-    });
-  }
-});
+  // 📜 Send sidebar data
+  socket.on("get sidebar", async () => {
+    const me = await User.findOne({ username: socket.data.username });
+    if (me) {
+      socket.emit("sidebar data", {
+        friends: me.friends,
+        friendRequests: me.friendRequests
+      });
+    }
+  });
 
 
   // 🟨 CHAT MESSAGE
