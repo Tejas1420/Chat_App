@@ -13,7 +13,7 @@ import { getMessaging } from "firebase-admin/messaging";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
-const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
+const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json") || path.resolve("./serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
