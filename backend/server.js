@@ -11,6 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getMessaging } from "firebase-admin/messaging";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
@@ -22,6 +23,14 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", "data:"]
+  }
+}));
 
 const server = http.createServer(app);
 const io = new Server(server);
