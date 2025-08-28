@@ -59,11 +59,12 @@ socket.on("sign in success", async (u) => {
     await swReady;
     const fcmToken = await registerForPush(u);
     if (fcmToken) {
-      await fetch("/api/register-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser, token: fcmToken }),
-      });
+await fetch("/api/register-token", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username: currentUser, fcmToken }),
+});
+
     }
   } catch (err) {
     console.error("Push registration failed:", err);
