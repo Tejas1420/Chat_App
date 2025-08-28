@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="google-site-verification" content="0T_-BqWYQjpc7CKNl-4284ugepEajJiz3aG4XiPiqbo" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Group Chat Application with Sign Up, Sign In, and Real-time Messaging Features.">
-  <meta name="keywords" content="Group Chat, Sign Up, Sign In, Real-time Messaging, Online Users, Friends, Friend Requests">
+  <meta name="keywords" content="Group Chat, Direct Messages, Friends, Real-time Chat">
   <meta name="author" content="Tejas Singh"> 
   <title>Group Chat</title>
   <link rel="stylesheet" href="style.css" />
@@ -13,81 +12,89 @@
 <body>
 
 <!-- 🟩 Sign Up Screen -->
-
 <div id="signup-screen" class="screen active">
   <h2>🟩 Sign Up</h2>
-  <input id="signup-username" placeholder="Username" /> <br>
-  <input id="signup-password" type="password" placeholder="Password" /> <br>
-  <input id="signup-confirm-password" type="password" placeholder="Confirm Password" /> <br>
+  <form id="signup-form">
+    <input id="signup-username" placeholder="Username" required /> <br>
+    <input id="signup-password" type="password" placeholder="Password" required /> <br>
+    <input id="signup-confirm-password" type="password" placeholder="Confirm Password" required /> <br>
 
-  <input id="signup-show-password" type="checkbox"
-         onchange="togglePassword('signup-password','signup-confirm-password',this)">
-  <label for="signup-show-password">Show password</label>
+    <input id="signup-show-password" type="checkbox">
+    <label for="signup-show-password">Show password</label>
+    <br>
 
-  <br>
-  <button onclick="signUp()">Sign Up</button>
+    <button type="button" id="signup-btn">Sign Up</button>
+  </form>
   <p>
     Already have an account?
-    <button onclick="showScreen('signin-screen')">Sign In</button>
+    <button type="button" id="signin-switch-btn">Sign In</button>
   </p>
 </div>
 
 <!-- 🟦 Sign In Screen -->
 <div id="signin-screen" class="screen">
   <h2>🟦 Sign In</h2>
-  <input id="signin-username" placeholder="Username" /> <br>
-  <input id="signin-password" type="password" placeholder="Password" /> <br>
+  <form id="signin-form">
+    <input id="signin-username" placeholder="Username" required /> <br>
+    <input id="signin-password" type="password" placeholder="Password" required /> <br>
 
-  <input id="signin-show-password" type="checkbox"
-         onchange="togglePassword('signin-password',null,this)">
-  <label for="signin-show-password">Show password</label>
+    <input id="signin-show-password" type="checkbox">
+    <label for="signin-show-password">Show password</label>
+    <br>
 
-  <br>
-  <button onclick="signIn()">Sign In</button>
+    <button type="button" id="signin-btn">Sign In</button>
+  </form>
   <p>
     New here?
-    <button onclick="showScreen('signup-screen')">Sign Up</button>
+    <button type="button" id="signup-switch-btn">Sign Up</button>
   </p>
 </div>
 
 <!-- 🟨 Chat Screen -->
 <div id="chat-screen" class="screen">
-  <h2>💬 Group Chat</h2>
-  <button id="darkModeToggle">🌙 Toggle Dark Mode</button>
+  <div id="chat-container" style="display:flex; height:100vh;">
+    
+    <!-- Sidebar -->
+    <div id="sidebar" style="width:250px; border-right:1px solid gray; padding:10px; overflow-y:auto;">
+      <h3>Chats</h3>
+      <button id="group-chat-btn">🌍 Group Chat</button>
 
-  <!-- Online Users -->
-  <h3>Online Users</h3>
-  <ul id="online-users"></ul>
+      <h4>DMs</h4>
+      <ul id="friends-dm-list"></ul>
 
-  <!-- Typing Indicator -->
-  <p id="typing-indicator" style="color: gray; font-style: italic;"></p>
+      <h4>Friend Requests</h4>
+      <ul id="friend-requests"></ul>
+      <button id="add-friend-btn">➕ Add Friend</button>
+    </div>
+    
+    <!-- Main Chat Area -->
+    <div id="chat-main" style="flex:1; padding:10px; display:flex; flex-direction:column;">
+      <h2 id="chat-title">🌍 Group Chat</h2>
+      <button id="darkModeToggle">🌙</button>
 
-  <h3>Friends</h3>
-  <ul id="friends-list"></ul>
-
-  <h3>Friend Requests</h3>
-  <ul id="friend-requests"></ul>
-  <button onclick="sendFriendRequest()">➕ Add Friend</button>
-
-  <!-- Messages -->
-  <h3>Messages</h3>
-  <ul id="messages"></ul>
-
-  <!-- Send Message -->
-  <form onsubmit="sendMessage(); return false;">
-    <input id="message" autocomplete="off" placeholder="Type your message..." />
-    <button type="submit">Send</button>
-  </form>
+      <!-- Messages -->
+      <ul id="messages" style="flex:1; overflow-y:auto;"></ul>
+      
+      <!-- Typing Indicator -->
+      <p id="typing-indicator" style="color: gray; font-style: italic;"></p>
+      
+      <!-- Send Message -->
+      <form id="message-form" style="display:flex; gap:5px;">
+        <input id="message" autocomplete="off" placeholder="Type your message..." style="flex:1;" required />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    
+  </div>
 </div>
 
-<!-- Socket.io & Client -->
+<!-- Scripts -->
 <script src="/socket.io/socket.io.js" defer></script>
 <script type="module" src="client.js"></script>
-
-<!-- Dark Mode + Password Toggle -->
+<script type="module" src="buttons.js"></script>
 <script src="dark-mode.js"></script>
 
 </body>
 </html>
 
-<!-- Made by Tejas Singh -->
+<!-- made by Tejas Singh -->

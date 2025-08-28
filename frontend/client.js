@@ -5,7 +5,12 @@ const socket = io(location.hostname.includes("localhost") ? "http://localhost:30
 const i = id => document.getElementById(id);
 const q = id => document.getElementById(id);
 const v = id => i(id).value;
-function setList(id, arr) { i(id).innerHTML = arr.join(""); }
+function setList(id, arr) {
+  const el = i(id);
+  if (!el) return; // element not found, do nothing
+  el.innerHTML = arr.join("");
+}
+
 
 let currentUser = "";
 let typingTimeout;
@@ -38,20 +43,27 @@ function signIn() {
   socket.emit("sign in", { username: v("signin-username"), password: v("signin-password") });
 }
 
-// ✅ After login
-// ✅ After login
 socket.on("sign in success", async (u) => {
   currentUser = u;
-  alert("✅ Welcome, " + u);
   showScreen("chat-screen");
   socket.emit("get sidebar");
+
   try {
-    await swReady; // Wait for service worker to be ready
-    await registerForPush(u);
-  } catch (e) {
-    console.error(e);
+    await swReady;
+    const fcmToken = await registerForPush(u);
+    if (fcmToken) {
+      await fetch("/api/register-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser, token: fcmToken }),
+      });
+    }
+  } catch (err) {
+    console.error("Push registration failed:", err);
   }
 });
+
+
 
 // ✅ After sign up
 socket.on("sign up success", () => {
@@ -69,14 +81,22 @@ socket.on("sign up error", (err) => {
 });
 
 // ✅ Sidebar
+// Sidebar update
 socket.on("sidebar data", ({ friends, friendRequests }) => {
-  setList("friends-list", friends.map(f => `<li>${f}</li>`));
+// In client.js sidebar render
+setList("friends-dm-list", friends.map(f => `
+  <li>
+    <button class="dm-btn" data-user="${f}">💬 ${f}</button>
+  </li>`));
+
   setList("friend-requests", friendRequests.map(r => `
     <li>${r}
-      <button onclick="acceptFriend('${r}')">✅</button>
-      <button onclick="declineFriend('${r}')">❌</button>
+      <button class="accept-btn" data-user="${r}">✅</button>
+      <button class="decline-btn" data-user="${r}">❌</button>
     </li>`));
 });
+
+
 
 // 🔄 Refresh sidebar when server requests it
 socket.on("sidebar update", (user) => {
@@ -90,12 +110,36 @@ socket.on("sidebar update", (user) => {
 function sendMessage() {
   const text = v("message");
   if (!text.trim()) return;
-  socket.emit("chat message", { username: currentUser, text });
+  
+  if (currentChat.type === "group") {
+    socket.emit("chat message", { username: currentUser, text });
+  } else if (currentChat.type === "dm") {
+    socket.emit("direct message", { to: currentChat.friend, text });
+  }
+  
   i("message").value = "";
   socket.emit("stop typing");
 }
+
 socket.on("previous messages", msgs => { i("messages").innerHTML = ""; msgs.forEach(addMessage); });
-socket.on("chat message", addMessage);
+socket.on("chat message", msg => {
+  if (currentChat.type === "group") addMessage(msg);
+});
+
+socket.on("direct messages", ({ friend, msgs }) => {
+  if (currentChat.type === "dm" && currentChat.friend === friend) {
+    i("messages").innerHTML = "";
+    msgs.forEach(addMessage);
+  }
+});
+
+socket.on("direct message", msg => {
+  if (currentChat.type === "dm" &&
+     (msg.from === currentChat.friend || msg.to === currentUser)) {
+    addMessage(msg);
+  }
+});
+
 socket.on("message deleted", id => q(id)?.remove());
 socket.on("message edited", msg => {
   const el = q(msg._id)?.querySelector(".text");
@@ -104,17 +148,40 @@ socket.on("message edited", msg => {
 
 function addMessage(msg) {
   const mine = msg.username === currentUser;
-  i("messages").insertAdjacentHTML("beforeend", `
-    <li id="${msg._id}">
-      <div class="bubble">
-        <div class="meta"><strong>${msg.username}</strong> 🕒 ${msg.time} 📅 ${msg.date}</div>
-        <div class="text">${msg.text}</div>
-        ${mine ? `
-          <button onclick="deleteMessage('${msg._id}')">🗑️</button>
-          <button onclick="editMessage('${msg._id}','${msg.text.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}')">✏️</button>` : ""}
-      </div>
-    </li>`);
+  const li = document.createElement("li");
+  li.id = msg._id;
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.innerHTML = `<strong>${msg.username}</strong> 🕒 ${msg.time} 📅 ${msg.date}`;
+
+  const textDiv = document.createElement("div");
+  textDiv.className = "text";
+  textDiv.textContent = msg.text;
+
+  bubble.appendChild(meta);
+  bubble.appendChild(textDiv);
+
+  if (mine) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑️";
+    deleteBtn.addEventListener("click", () => deleteMessage(msg._id));
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️";
+    editBtn.addEventListener("click", () => editMessage(msg._id, msg.text));
+
+    bubble.appendChild(deleteBtn);
+    bubble.appendChild(editBtn);
+  }
+
+  li.appendChild(bubble);
+  i("messages").appendChild(li);
 }
+
 function deleteMessage(id) { socket.emit("delete message", id); }
 function editMessage(id, old) {
   const text = prompt("Edit:", old);
@@ -170,7 +237,42 @@ socket.on("online users", users => {
   setList("online-users", users.map(u => `<li style="font-weight:${u===currentUser?"bold":"normal"}">${u}</li>`));
 });
 
-// Export funcs to window (for HTML onclick)
-Object.assign(window, { signUp, signIn, sendMessage, showScreen, addMessage, deleteMessage, editMessage, sendFriendRequest, acceptFriend, declineFriend });
+let currentChat = { type: "group", friend: null };
+
+function openGroupChat() {
+  currentChat = { type: "group", friend: null };
+  i("chat-title").textContent = "🌍 Group Chat";
+  i("messages").innerHTML = "";
+  socket.emit("get group messages");
+}
+
+function openDM(friend) {
+  currentChat = { type: "dm", friend };
+  i("chat-title").textContent = "💬 DM with " + friend;
+  i("messages").innerHTML = "";
+  socket.emit("get direct messages", friend);
+}
+
+i("message-form").addEventListener("submit", e => {
+  e.preventDefault();
+  sendMessage();
+});
+
+i("group-chat-btn").addEventListener("click", openGroupChat);
+
+export {
+  signUp,
+  signIn,
+  sendMessage,
+  showScreen,
+  addMessage,
+  deleteMessage,
+  editMessage,
+  sendFriendRequest,
+  acceptFriend,
+  declineFriend,
+  openGroupChat,
+  openDM
+};
 
 // made by tejas singh

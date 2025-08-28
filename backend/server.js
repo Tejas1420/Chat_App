@@ -12,8 +12,10 @@ import { fileURLToPath } from "url";
 import { getMessaging } from "firebase-admin/messaging";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import DirectMessage from "./models/DirectMessage.js";
 
-const serviceAccountPath = path.resolve("../../../../etc/secrets/serviceAccountKey.json") || path.resolve("./serviceAccountKey.json");
+
+const serviceAccountPath = path.resolve("./serviceAccountKey.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,27 +32,33 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],   // no inline scripts needed now
-        styleSrc: ["'self'"],    // no inline styles needed now
+        scriptSrc: [
+          "'self'",
+          "https://www.gstatic.com",   // Firebase scripts
+          "'unsafe-inline'"
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'"
+        ],
         imgSrc: ["'self'", "data:"],
-      },
+        connectSrc: [
+          "'self'",
+          "https://fcm.googleapis.com",                   // push
+          "https://firebaseinstallations.googleapis.com", // installations
+          "https://fcmregistrations.googleapis.com",      // ✅ registration fix
+          "https://www.googleapis.com",                   // API
+          "https://securetoken.googleapis.com"            // auth / token refresh
+        ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"]
+      }
     },
-    frameguard: { action: "deny" }, // Anti-clickjacking
+    frameguard: { action: "deny" }
   })
 );
 
-// Extra protections (added separately in Helmet v7)
-app.use(helmet.noSniff());        // X-Content-Type-Options: nosniff
-app.use(helmet.hidePoweredBy());  // Remove X-Powered-By
-
-// HSTS (safe: no preload, no subdomains)
-app.use(
-  helmet.hsts({
-    maxAge: 63072000,     // 2 years
-    includeSubDomains: false, // avoid www. issue
-    preload: false
-  })
-);
 
 
 const server = http.createServer(app);
@@ -125,27 +133,28 @@ async function sendPushNotificationToAll(payload) {
 }
 
 app.post('/api/register-token', registerTokenLimiter, async (req, res) => {
-  const { userId, token } = req.body;
-  if (!userId || !token) return res.status(400).json({ error: 'Missing userId or token' });
-
-  if (typeof userId !== "string") return res.status(400).json({ error: 'Invalid userId' });
+  const { username, fcmToken } = req.body;
+  if (!username || !fcmToken) {
+    return res.status(400).json({ error: 'Missing username or fcmToken' });
+  }
 
   try {
-    const user = await User.findOne({ username: userId });
+    const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (!user.fcmTokens.includes(token)) {
-      user.fcmTokens.push(token);
+    if (!user.fcmTokens.includes(fcmToken)) {
+      user.fcmTokens.push(fcmToken);
       await user.save();
     }
 
-    console.log(`Registered token for user %s:`, userId, token);
+    console.log(`✅ Registered token for ${username}: ${fcmToken}`);
     res.json({ success: true });
   } catch (err) {
     console.error('Error registering token:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 io.on("connection", (socket) => {
   console.log("📶 A user connected");
@@ -189,6 +198,8 @@ io.on("connection", (socket) => {
       socket.data.username = username; // ✅ store username
       onlineUsers.add(username);       // ✅ add to online list
       io.emit("online users", Array.from(onlineUsers));
+
+      socket.join(username); // ✅ personal room for DMs
 
       socket.emit("sign in success", username);
       const msgs = await Message.find({}).limit(100);
@@ -349,6 +360,50 @@ io.on("connection", (socket) => {
       console.error("Error editing message:", err);
     }
   });
+
+  // 📩 Send DM
+socket.on("direct message", async ({ to, text }) => {
+  const from = socket.data.username;
+  if (!from || !to || !text.trim()) return;
+
+  const fullMsg = {
+    from,
+    to,
+    text: sanitize(text),
+    time: new Date().toLocaleTimeString(),
+    date: new Date().toLocaleDateString()
+  };
+
+  const saved = await DirectMessage.create(fullMsg);
+
+  io.to(from).emit("direct message", saved);
+  io.to(to).emit("direct message", saved);
+});
+
+// 📜 Load DM history
+socket.on("get direct messages", async (friend) => {
+  const me = socket.data.username;
+  if (!me) return;
+
+  const msgs = await DirectMessage.find({
+    $or: [
+      { from: me, to: friend },
+      { from: friend, to: me }
+    ]
+  }).sort({ _id: 1 }).limit(100);
+
+  socket.emit("direct messages", { friend, msgs });
+});
+
+// 📜 Load group messages
+socket.on("get group messages", async () => {
+  try {
+    const msgs = await Message.find({}).limit(100);
+    socket.emit("previous messages", msgs);
+  } catch (err) {
+    console.error("Error fetching group messages:", err);
+  }
+});
 
   // Handle disconnect
   socket.on("disconnect", () => {
