@@ -1,13 +1,13 @@
-// ✅ Socket setup (local or render)
-const socket = io(location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
 
-// ✅ Helpers
+const socket = io(location.hostname.includes("localhost") ? "http:
+
+
 const i = id => document.getElementById(id);
 const q = id => document.getElementById(id);
 const v = id => i(id).value;
 function setList(id, arr) {
   const el = i(id);
-  if (!el) return; // element not found, do nothing
+  if (!el) return; 
   el.innerHTML = arr.join("");
 }
 
@@ -15,7 +15,7 @@ function setList(id, arr) {
 let currentUser = "";
 let typingTimeout;
 
-// ✅ Service Worker + Push
+
 import { registerForPush } from './firebase-init.js';
 
 let swReady = Promise.resolve();
@@ -27,13 +27,13 @@ if ('serviceWorker' in navigator) {
     .catch(console.error);
 }
 
-// ✅ Screen switcher
+
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(div => div.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
-// ✅ Auth
+
 function signUp() {
   const u = v("signup-username"), p = v("signup-password"), c = v("signup-confirm-password");
   if (p !== c) return alert("Passwords don’t match!");
@@ -46,7 +46,7 @@ function signIn() {
 function highlightDM(friend) {
   const btn = document.querySelector(`.dm-btn[data-user="${friend}"]`);
   if (btn) {
-    btn.classList.add("new-message"); // add CSS class for highlight
+    btn.classList.add("new-message"); 
   }
 }
 
@@ -73,7 +73,7 @@ await fetch("/api/register-token", {
 
 
 
-// ✅ After sign up
+
 socket.on("sign up success", () => {
   alert("✅ Signed Up! Now Sign In");
   showScreen("signin-screen");
@@ -88,10 +88,10 @@ socket.on("sign up error", (err) => {
   i("signup-confirm-password").value = "";
 });
 
-// ✅ Sidebar
-// Sidebar update
+
+
 socket.on("sidebar data", ({ friends, friendRequests }) => {
-// In client.js sidebar render
+
 setList("friends-dm-list", friends.map(f => `
   <li>
     <button class="dm-btn" data-user="${f}">💬 ${f}</button>
@@ -106,7 +106,7 @@ setList("friends-dm-list", friends.map(f => `
 
 
 
-// 🔄 Refresh sidebar when server requests it
+
 socket.on("sidebar update", (user) => {
   if (user === currentUser) {
     socket.emit("get sidebar");
@@ -114,7 +114,7 @@ socket.on("sidebar update", (user) => {
 });
 
 
-// ✅ Chat
+
 function sendMessage() {
   const text = v("message");
   if (!text.trim()) return;
@@ -122,7 +122,7 @@ function sendMessage() {
   if (currentChat.type === "group") {
     socket.emit("chat message", { username: currentUser, text });
   } else if (currentChat.type === "dm") {
-    // ✅ Add the message instantly for the sender
+    
     const msg = {
       from: currentUser,
       to: currentChat.friend,
@@ -132,7 +132,7 @@ function sendMessage() {
     };
     addMessage(msg);
 
-    // ✅ Send to server so the other user gets it
+    
     socket.emit("direct message", { to: currentChat.friend, text });
   }
 
@@ -149,7 +149,7 @@ socket.on("direct messages", ({ friend, msgs }) => {
   if (currentChat.type === "dm" && currentChat.friend === friend) {
     i("messages").innerHTML = "";
     msgs.forEach(addMessage);
-    currentChat.loaded = true; // ✅ mark that history is loaded
+    currentChat.loaded = true; 
   }
 });
 
@@ -157,10 +157,10 @@ socket.on("direct messages", ({ friend, msgs }) => {
 socket.on("direct message", msg => {
   if (currentChat.type === "dm" &&
      (msg.from === currentChat.friend || msg.to === currentUser)) {
-    // ✅ Show instantly in current DM
+    
     addMessage(msg);
   } else {
-    // ✅ Only highlight if the message is TO me (not from me)
+    
     if (msg.to === currentUser) {
       highlightDM(msg.from);
     }
@@ -175,7 +175,7 @@ socket.on("message edited", msg => {
 });
 
 function addMessage(msg) {
-  // For group messages use msg.username, for DMs use msg.from
+  
   const sender = msg.username || msg.from;
 
   const mine = sender === currentUser;
@@ -220,19 +220,19 @@ function editMessage(id, old) {
   if (text?.trim()) socket.emit("edit message", { id, newText: text });
 }
 
-// ✅ Friends
+
 function sendFriendRequest() { const u = prompt("Enter username:"); if (u) socket.emit("send friend request", u); }
 function acceptFriend(u) { socket.emit("accept friend request", u); }
 function declineFriend(u) { socket.emit("decline friend request", u); }
 
-// ✅ Typing
+
 i("message").addEventListener("input", () => {
   socket.emit("typing");
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => socket.emit("stop typing"), 1000);
 });
 
-// --- New multi-user typing indicator logic ---
+
 const typingUsers = new Set();
 
 socket.on("typing", (username) => {
@@ -264,7 +264,7 @@ function updateTypingIndicator() {
   }
 }
 
-// ✅ Online users
+
 socket.on("online users", users => {
   setList("online-users", users.map(u => `<li style="font-weight:${u===currentUser?"bold":"normal"}">${u}</li>`));
 });
@@ -283,7 +283,7 @@ function openDM(friend) {
   i("chat-title").textContent = "💬 DM with " + friend;
   i("messages").innerHTML = "";
 
-  // ✅ remove highlight when opening
+  
   const btn = document.querySelector(`.dm-btn[data-user="${friend}"]`);
   if (btn) btn.classList.remove("new-message");
 

@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   username: String,
   password: String,
   fcmTokens: {
-    type: [String],      // Array of strings to store multiple tokens
+    type: [String],      
     default: []
   },
   friends: { type: [String], default: [] },

@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<!-- 🟩 Sign Up Screen -->
+
 <div id="signup-screen" class="screen active">
   <h2>🟩 Sign Up</h2>
   <form id="signup-form">
@@ -31,7 +31,7 @@
   </p>
 </div>
 
-<!-- 🟦 Sign In Screen -->
+
 <div id="signin-screen" class="screen">
   <h2>🟦 Sign In</h2>
   <form id="signin-form">
@@ -50,11 +50,11 @@
   </p>
 </div>
 
-<!-- 🟨 Chat Screen -->
+
 <div id="chat-screen" class="screen">
   <div id="chat-container">
     
-    <!-- Sidebar -->
+    
     <div id="sidebar">
       <h3>Chats</h3>
       <button id="group-chat-btn">🌍 Group Chat</button>
@@ -67,18 +67,18 @@
       <button id="add-friend-btn">➕ Add Friend</button>
     </div>
     
-    <!-- Main Chat Area -->
+    
     <div id="chat-main">
       <h2 id="chat-title">🌍 Group Chat</h2>
       <button id="darkModeToggle">🌙</button>
 
-      <!-- Messages -->
+      
       <ul id="messages"></ul>
       
-      <!-- Typing Indicator -->
+      
       <p id="typing-indicator"></p>
       
-      <!-- Send Message -->
+      
       <form id="message-form">
         <input id="message" autocomplete="off" placeholder="Type your message..." required />
         <button type="submit">Send</button>
@@ -88,7 +88,7 @@
   </div>
 </div>
 
-<!-- Scripts -->
+
 <script src="/socket.io/socket.io.js" defer></script>
 <script type="module" src="client.js"></script>
 <script type="module" src="buttons.js"></script>
