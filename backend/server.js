@@ -306,8 +306,8 @@ io.on("connection", (socket) => {
     const fullMsg = {
       username,
       text: sanitize(msg.text),
-      time: new Date().toLocaleTimeString(),
-      date: new Date().toLocaleDateString(),
+time: new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
+date: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
     };
 
     const saved = await Message.create(fullMsg);
@@ -370,8 +370,9 @@ socket.on("direct message", async ({ to, text }) => {
     from,
     to,
     text: sanitize(text),
-    time: new Date().toLocaleTimeString(),
-    date: new Date().toLocaleDateString()
+time: new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
+date: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }),
+
   };
 
   const saved = await DirectMessage.create(fullMsg);

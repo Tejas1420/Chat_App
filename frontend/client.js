@@ -175,7 +175,10 @@ socket.on("message edited", msg => {
 });
 
 function addMessage(msg) {
-  const mine = msg.username === currentUser;
+  // For group messages use msg.username, for DMs use msg.from
+  const sender = msg.username || msg.from;
+
+  const mine = sender === currentUser;
   const li = document.createElement("li");
   li.id = msg._id;
 
@@ -184,7 +187,7 @@ function addMessage(msg) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.innerHTML = `<strong>${msg.username}</strong> 🕒 ${msg.time} 📅 ${msg.date}`;
+  meta.innerHTML = `<strong>${sender}</strong> 🕒 ${msg.time} 📅 ${msg.date}`;
 
   const textDiv = document.createElement("div");
   textDiv.className = "text";
@@ -209,6 +212,7 @@ function addMessage(msg) {
   li.appendChild(bubble);
   i("messages").appendChild(li);
 }
+
 
 function deleteMessage(id) { socket.emit("delete message", id); }
 function editMessage(id, old) {
