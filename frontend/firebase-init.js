@@ -28,11 +28,12 @@ export async function registerForPush(userId) {
     console.log('FCM registration token:', token);
 
     // send token to your backend to save (associate with userId)
-    await fetch('/api/register-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, token, platform: 'web' })
-    });
+await fetch("/api/register-token", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username: currentUser, fcmToken }),
+});
+
     return token;
   } catch (err) {
     console.error('registerForPush error', err);
