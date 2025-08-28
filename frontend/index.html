@@ -52,10 +52,10 @@
 
 <!-- 🟨 Chat Screen -->
 <div id="chat-screen" class="screen">
-  <div id="chat-container" style="display:flex; height:100vh;">
+  <div id="chat-container">
     
     <!-- Sidebar -->
-    <div id="sidebar" style="width:250px; border-right:1px solid gray; padding:10px; overflow-y:auto;">
+    <div id="sidebar">
       <h3>Chats</h3>
       <button id="group-chat-btn">🌍 Group Chat</button>
 
@@ -68,19 +68,19 @@
     </div>
     
     <!-- Main Chat Area -->
-    <div id="chat-main" style="flex:1; padding:10px; display:flex; flex-direction:column;">
+    <div id="chat-main">
       <h2 id="chat-title">🌍 Group Chat</h2>
       <button id="darkModeToggle">🌙</button>
 
       <!-- Messages -->
-      <ul id="messages" style="flex:1; overflow-y:auto;"></ul>
+      <ul id="messages"></ul>
       
       <!-- Typing Indicator -->
-      <p id="typing-indicator" style="color: gray; font-style: italic;"></p>
+      <p id="typing-indicator"></p>
       
       <!-- Send Message -->
-      <form id="message-form" style="display:flex; gap:5px;">
-        <input id="message" autocomplete="off" placeholder="Type your message..." style="flex:1;" required />
+      <form id="message-form">
+        <input id="message" autocomplete="off" placeholder="Type your message..." required />
         <button type="submit">Send</button>
       </form>
     </div>

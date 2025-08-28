@@ -13,6 +13,7 @@ import { getMessaging } from "firebase-admin/messaging";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import DirectMessage from "./models/DirectMessage.js";
+import cors from "cors";
 
 
 const serviceAccountPath = path.resolve("./serviceAccountKey.json");
@@ -26,40 +27,87 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-// Apply Helmet with CSP + frameguard
+// ===== 1️⃣ Redirect www → non-www =====
+app.use((req, res, next) => {
+  if (req.headers.host.startsWith("www.")) {
+    const newHost = req.headers.host.slice(4); // remove www.
+    return res.redirect(301, `https://${newHost}${req.url}`);
+  }
+  next();
+});
+
+// ===== 2️⃣ CORS =====
 app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "https://www.gstatic.com",   // Firebase scripts
-          "'unsafe-inline'"
-        ],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'"
-        ],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: [
-          "'self'",
-          "https://fcm.googleapis.com",                   // push
-          "https://firebaseinstallations.googleapis.com", // installations
-          "https://fcmregistrations.googleapis.com",      // ✅ registration fix
-          "https://www.googleapis.com",                   // API
-          "https://securetoken.googleapis.com"            // auth / token refresh
-        ],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        objectSrc: ["'none'"],
-        frameSrc: ["'none'"]
-      }
-    },
-    frameguard: { action: "deny" }
+  cors({
+    origin: "https://chat-app-4x3l.onrender.com", // your frontend only
+    methods: ["GET", "POST"],
   })
 );
 
+// ===== 3️⃣ Helmet security headers =====
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://www.gstatic.com"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: [
+          "'self'",
+          "https://fcm.googleapis.com",
+          "https://firebaseinstallations.googleapis.com",
+          "https://fcmregistrations.googleapis.com",
+          "https://www.googleapis.com",
+          "https://securetoken.googleapis.com"
+        ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        childSrc: ["'self'"],
+        formAction: ["'self'"],
+        baseUri: ["'self'"],
+        manifestSrc: ["'self'"]
+      }
+    },
+    frameguard: { action: "deny" },
+    hsts: {
+      maxAge: 31536000,      // 1 year
+      includeSubDomains: true,
+      preload: true
+    }
+  })
+);
 
+// ===== 4️⃣ Serve static files with CSP =====
+app.use(express.static(path.join(__dirname, "public")));
+
+// ===== 5️⃣ Ensure JSON responses also have CSP =====
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:;"
+  );
+  next();
+});
+
+// ===== 6️⃣ Example routes =====
+app.get("/api/messages", (req, res) => {
+  res.json({ messages: [] });
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ===== 7️⃣ Other security headers =====
+app.use(helmet.xssFilter());
+app.use(helmet.frameguard({ action: "deny" }));
+app.use(helmet.ieNoOpen());
+app.use(helmet.noSniff());
+app.use(helmet.referrerPolicy({ policy: "no-referrer" }));
 
 const server = http.createServer(app);
 const io = new Server(server);

@@ -2,7 +2,6 @@
   display: none;
 }
 
-/* Moved to style.css */
 .screen.active {
   display: block;
 }
@@ -20,6 +19,10 @@ input {
   width: 200px;
 }
 
+input[type="checkbox"] {
+  vertical-align: middle;
+}
+
 button {
   padding: 8px 12px;
   margin: 5px;
@@ -29,6 +32,9 @@ button {
 ul#messages {
   list-style: none;
   padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
 }
 
 ul#messages li {
@@ -100,11 +106,10 @@ body.dark-mode .meta {
 #typing-indicator {
   margin: 8px 0;
   font-size: 0.9em;
-  color: #555;
+  color: gray;
   font-style: italic;
 }
 
-/* Dark Mode Adjustments */
 body.dark-mode #online-users {
   background: #1e1e1e;
   border: 1px solid #333;
@@ -116,10 +121,6 @@ body.dark-mode #online-users li {
 
 body.dark-mode #typing-indicator {
   color: #aaa;
-}
-
-input[type="checkbox"] {
-  vertical-align: middle;
 }
 
 #friends-list,
@@ -160,31 +161,39 @@ body.dark-mode #friend-requests {
   font-weight: bold;
 }
 
+/* Chat layout */
+#chat-container {
+  display: flex;
+  height: 100vh;
+}
+
+#sidebar {
+  width: 250px;
+  border-right: 1px solid gray;
+  padding: 10px;
+  overflow-y: auto;
+}
+
 #chat-main {
+  flex: 1;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  /* full height */
-}
-
-#messages {
-  flex: 1;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
 }
 
 #message-form {
   display: flex;
   gap: 5px;
   margin-top: auto;
-  /* pushes form to bottom */
   padding: 10px;
   background: #fff;
-  /* bar stands out */
   position: sticky;
-  /* stays visible even while scrolling */
   bottom: 0;
 }
 
-/* made by tejas singh */
+#message {
+  flex: 1;
+}
+
+/* made by Tejas Singh */
