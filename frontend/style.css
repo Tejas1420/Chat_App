@@ -143,4 +143,9 @@ body.dark-mode #friends-list, body.dark-mode #friend-requests {
   width: 100%;
 }
 
+.dm-btn.new-message {
+  background-color: yellow;
+  font-weight: bold;
+}
+
 /* made by tejas singh */

@@ -43,6 +43,13 @@ function signIn() {
   socket.emit("sign in", { username: v("signin-username"), password: v("signin-password") });
 }
 
+function highlightDM(friend) {
+  const btn = document.querySelector(`.dm-btn[data-user="${friend}"]`);
+  if (btn) {
+    btn.classList.add("new-message"); // add CSS class for highlight
+  }
+}
+
 socket.on("sign in success", async (u) => {
   currentUser = u;
   showScreen("chat-screen");
@@ -130,15 +137,23 @@ socket.on("direct messages", ({ friend, msgs }) => {
   if (currentChat.type === "dm" && currentChat.friend === friend) {
     i("messages").innerHTML = "";
     msgs.forEach(addMessage);
+    currentChat.loaded = true; // ✅ mark that history is loaded
   }
 });
+
 
 socket.on("direct message", msg => {
   if (currentChat.type === "dm" &&
      (msg.from === currentChat.friend || msg.to === currentUser)) {
+    // ✅ Show instantly in current DM
     addMessage(msg);
+  } else {
+    // ✅ If this DM isn’t open, highlight sidebar
+    const friend = msg.from === currentUser ? msg.to : msg.from;
+    highlightDM(friend);
   }
 });
+
 
 socket.on("message deleted", id => q(id)?.remove());
 socket.on("message edited", msg => {
@@ -247,11 +262,17 @@ function openGroupChat() {
 }
 
 function openDM(friend) {
-  currentChat = { type: "dm", friend };
+  currentChat = { type: "dm", friend, loaded: false };
   i("chat-title").textContent = "💬 DM with " + friend;
   i("messages").innerHTML = "";
+
+  // ✅ remove highlight when opening
+  const btn = document.querySelector(`.dm-btn[data-user="${friend}"]`);
+  if (btn) btn.classList.remove("new-message");
+
   socket.emit("get direct messages", friend);
 }
+
 
 i("message-form").addEventListener("submit", e => {
   e.preventDefault();
