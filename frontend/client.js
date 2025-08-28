@@ -121,9 +121,20 @@ function sendMessage() {
   if (currentChat.type === "group") {
     socket.emit("chat message", { username: currentUser, text });
   } else if (currentChat.type === "dm") {
+    // ✅ Add the message instantly for the sender
+    const msg = {
+      from: currentUser,
+      to: currentChat.friend,
+      text,
+      time: new Date().toLocaleTimeString(),
+      date: new Date().toLocaleDateString()
+    };
+    addMessage(msg);
+
+    // ✅ Send to server so the other user gets it
     socket.emit("direct message", { to: currentChat.friend, text });
   }
-  
+
   i("message").value = "";
   socket.emit("stop typing");
 }
@@ -148,9 +159,10 @@ socket.on("direct message", msg => {
     // ✅ Show instantly in current DM
     addMessage(msg);
   } else {
-    // ✅ If this DM isn’t open, highlight sidebar
-    const friend = msg.from === currentUser ? msg.to : msg.from;
-    highlightDM(friend);
+    // ✅ Only highlight if the message is TO me (not from me)
+    if (msg.to === currentUser) {
+      highlightDM(msg.from);
+    }
   }
 });
 
