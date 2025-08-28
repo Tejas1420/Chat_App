@@ -1,5 +1,11 @@
-.screen { display: none; } /* Moved to style.css */
-.screen.active { display: block; }
+.screen {
+  display: none;
+}
+
+/* Moved to style.css */
+.screen.active {
+  display: block;
+}
 
 body {
   font-family: Arial, sans-serif;
@@ -116,27 +122,33 @@ input[type="checkbox"] {
   vertical-align: middle;
 }
 
-#friends-list, #friend-requests {
+#friends-list,
+#friend-requests {
   list-style: none;
   padding: 0;
   margin: 10px 0;
   background: #fff;
   border-radius: 5px;
 }
-#friends-list li, #friend-requests li {
+
+#friends-list li,
+#friend-requests li {
   padding: 5px;
   border-bottom: 1px solid #ddd;
 }
-#friends-list li:last-child, #friend-requests li:last-child {
+
+#friends-list li:last-child,
+#friend-requests li:last-child {
   border-bottom: none;
 }
-body.dark-mode #friends-list, body.dark-mode #friend-requests {
+
+body.dark-mode #friends-list,
+body.dark-mode #friend-requests {
   background: #1e1e1e;
   border: 1px solid #333;
 }
 
-.selector
-{
+.selector {
   position: fixed;
   top: 0;
   left: 0;
@@ -146,6 +158,33 @@ body.dark-mode #friends-list, body.dark-mode #friend-requests {
 .dm-btn.new-message {
   background-color: yellow;
   font-weight: bold;
+}
+
+#chat-main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* full height */
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+#message-form {
+  display: flex;
+  gap: 5px;
+  margin-top: auto;
+  /* pushes form to bottom */
+  padding: 10px;
+  background: #fff;
+  /* bar stands out */
+  position: sticky;
+  /* stays visible even while scrolling */
+  bottom: 0;
 }
 
 /* made by tejas singh */
