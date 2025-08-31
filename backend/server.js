@@ -453,6 +453,31 @@ socket.on("get group messages", async () => {
   }
 });
 
+// ===== DM message delete =====
+socket.on("delete dm", ({ to, id }) => {
+  // Find the DM between current user and 'to'
+  if (dmMessages[to]) {
+    dmMessages[to] = dmMessages[to].filter(msg => msg._id !== id);
+    // Notify both users
+    [socket.id, getSocketId(to)].forEach(sid => {
+      io.to(sid).emit("message deleted", id);
+    });
+  }
+});
+
+// ===== DM message edit =====
+socket.on("edit dm", ({ to, id, newText }) => {
+  if (dmMessages[to]) {
+    const msg = dmMessages[to].find(m => m._id === id);
+    if (msg) {
+      msg.text = newText;
+      // Notify both users
+      [socket.id, getSocketId(to)].forEach(sid => {
+        io.to(sid).emit("message edited", msg);
+      });
+    }
+  }
+});
   // Handle disconnect
   socket.on("disconnect", () => {
     if (socket.data.username) {
