@@ -454,28 +454,34 @@ socket.on("get group messages", async () => {
 });
 
 // ===== DM message delete =====
-socket.on("delete dm", ({ to, id }) => {
-  // Find the DM between current user and 'to'
-  if (dmMessages[to]) {
-    dmMessages[to] = dmMessages[to].filter(msg => msg._id !== id);
-    // Notify both users
-    [socket.id, getSocketId(to)].forEach(sid => {
-      io.to(sid).emit("message deleted", id);
-    });
+socket.on("delete dm", async ({ to, id }) => {
+  const from = socket.data.username;
+  if (!from || !to) return;
+  try {
+    const deleted = await DirectMessage.findByIdAndDelete(id);
+    if (deleted) {
+      io.to(from).to(to).emit("message deleted", id);
+    }
+  } catch (err) {
+    console.error("DM delete error:", err);
   }
 });
 
 // ===== DM message edit =====
-socket.on("edit dm", ({ to, id, newText }) => {
-  if (dmMessages[to]) {
-    const msg = dmMessages[to].find(m => m._id === id);
-    if (msg) {
-      msg.text = newText;
-      // Notify both users
-      [socket.id, getSocketId(to)].forEach(sid => {
-        io.to(sid).emit("message edited", msg);
-      });
+socket.on("edit dm", async ({ to, id, newText }) => {
+  const from = socket.data.username;
+  if (!from || !to || !newText?.trim()) return;
+  try {
+    const updated = await DirectMessage.findByIdAndUpdate(
+      id,
+      { text: sanitize(newText) },
+      { new: true }
+    );
+    if (updated) {
+      io.to(from).to(to).emit("message edited", updated);
     }
+  } catch (err) {
+    console.error("DM edit error:", err);
   }
 });
   // Handle disconnect
