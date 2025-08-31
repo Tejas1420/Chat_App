@@ -1,38 +1,28 @@
-
 import { 
   signUp,
   signIn,
   sendMessage,
   showScreen,
-  addMessage,
-  deleteMessage,
-  editMessage,
+  openDM,
   sendFriendRequest,
   acceptFriend,
-  declineFriend,
-  openGroupChat,
-  openDM
-} from './client.js'; 
-
+  declineFriend
+} from './client.js';
 
 document.addEventListener("DOMContentLoaded", () => {
-  
+
   const signupBtn = document.getElementById("signup-btn");
-  if (signupBtn) signupBtn.addEventListener("click", () => signUp());
+  if (signupBtn) signupBtn.addEventListener("click", signUp);
 
-  
-  const signinSwitch = document.getElementById("signin-switch-btn");
-  if (signinSwitch) signinSwitch.addEventListener("click", () => showScreen("signin-screen"));
-
-  
   const signinBtn = document.getElementById("signin-btn");
-  if (signinBtn) signinBtn.addEventListener("click", () => signIn());
+  if (signinBtn) signinBtn.addEventListener("click", signIn);
 
-  
   const signupSwitch = document.getElementById("signup-switch-btn");
   if (signupSwitch) signupSwitch.addEventListener("click", () => showScreen("signup-screen"));
 
-  
+  const signinSwitch = document.getElementById("signin-switch-btn");
+  if (signinSwitch) signinSwitch.addEventListener("click", () => showScreen("signin-screen"));
+
   const darkToggle = document.getElementById("darkModeToggle");
   if (darkToggle) {
     darkToggle.addEventListener("click", () => {
@@ -40,57 +30,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  
   const addFriendBtn = document.getElementById("add-friend-btn");
-  if (addFriendBtn) addFriendBtn.addEventListener("click", () => sendFriendRequest());
+  if (addFriendBtn) addFriendBtn.addEventListener("click", sendFriendRequest);
 
-  
   const signupShow = document.getElementById("signup-show-password");
-  if (signupShow) {
-    signupShow.addEventListener("change", function() {
-      togglePassword("signup-password", "signup-confirm-password", this);
-    });
-  }
+  if (signupShow) signupShow.addEventListener("change", function() {
+    togglePassword("signup-password", "signup-confirm-password", this.checked);
+  });
 
-  
   const signinShow = document.getElementById("signin-show-password");
-  if (signinShow) {
-    signinShow.addEventListener("change", function() {
-      togglePassword("signin-password", null, this);
-    });
-  }
+  if (signinShow) signinShow.addEventListener("change", function() {
+    togglePassword("signin-password", null, this.checked);
+  });
 
-  
   const msgForm = document.getElementById("message-form");
-  if (msgForm) {
-    msgForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      sendMessage();
-    });
-  }
+  if (msgForm) msgForm.addEventListener("submit", e => {
+    e.preventDefault();
+    sendMessage();
+  });
 });
 
-
-function togglePassword(id1, id2, checkbox) {
+// ---------------- Password Toggle ----------------
+function togglePassword(id1, id2, checked) {
   const el1 = document.getElementById(id1);
   const el2 = id2 ? document.getElementById(id2) : null;
-  const type = checkbox.checked ? "text" : "password";
+  const type = checked ? "text" : "password";
   if (el1) el1.type = type;
   if (el2) el2.type = type;
 }
 
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("dm-btn")) {
-    const user = e.target.dataset.user;
-    openDM(user);
-  }
-  if (e.target.classList.contains("accept-btn")) {
-    const user = e.target.dataset.user;
-    acceptFriend(user);
-  }
-  if (e.target.classList.contains("decline-btn")) {
-    const user = e.target.dataset.user;
-    declineFriend(user);
-  }
+// ---------------- DM & Friend Request Buttons ----------------
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("dm-btn")) openDM(e.target.dataset.user);
+  if (e.target.classList.contains("accept-btn")) acceptFriend(e.target.dataset.user);
+  if (e.target.classList.contains("decline-btn")) declineFriend(e.target.dataset.user);
 });
-// made by tejas singh
