@@ -98,8 +98,8 @@ app.get("/api/messages", (req, res) => {
   res.json({ messages: [] });
 });
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend", "index.html"));
 });
 
 // ===== 7️⃣ Other security headers =====
