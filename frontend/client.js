@@ -86,7 +86,7 @@ function addMessage(msg) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = `${sender} 🕒 ${msg.time} 📅 ${msg.date}`;
+  meta.textContent = `${sender} 🕒 ${msg.time || ""} 📅 ${msg.date || ""}`;
 
   const textDiv = document.createElement("div");
   textDiv.className = "text";
@@ -98,10 +98,29 @@ function addMessage(msg) {
   if (mine) {
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "🗑️";
-    deleteBtn.addEventListener("click", () => deleteMessage(msg._id));
+    deleteBtn.addEventListener("click", () => {
+      li.remove(); // remove from DOM immediately
+      if (currentChat.type === "group") {
+        socket.emit("delete message", msg._id);
+      } else if (currentChat.type === "dm") {
+        socket.emit("delete dm", { to: currentChat.friend, id: msg._id });
+      }
+    });
+
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
-    editBtn.addEventListener("click", () => editMessage(msg._id, msg.text));
+    editBtn.addEventListener("click", () => {
+      const text = prompt("Edit:", msg.text);
+      if (!text?.trim()) return;
+      textDiv.textContent = text; // update DOM
+      msg.text = text; // update local object
+      if (currentChat.type === "group") {
+        socket.emit("edit message", { id: msg._id, newText: text });
+      } else if (currentChat.type === "dm") {
+        socket.emit("edit dm", { to: currentChat.friend, id: msg._id, newText: text });
+      }
+    });
+
     bubble.appendChild(deleteBtn);
     bubble.appendChild(editBtn);
   }
