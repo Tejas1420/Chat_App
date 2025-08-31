@@ -25,7 +25,6 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(express.static("public"));
 
 // ===== 1️⃣ Redirect www → non-www =====
 app.use((req, res, next) => {
@@ -82,7 +81,7 @@ app.use(
 );
 
 // ===== 4️⃣ Serve static files with CSP =====
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // ===== 5️⃣ Ensure JSON responses also have CSP =====
 app.use((req, res, next) => {
