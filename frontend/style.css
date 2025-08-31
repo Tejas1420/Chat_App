@@ -196,4 +196,8 @@ body.dark-mode #friend-requests {
   flex: 1;
 }
 
+.bold-user {
+  font-weight: bold;
+}
+
 /* made by Tejas Singh */
