@@ -44,11 +44,15 @@ function setFriendRequestsList(requests) {
 
 function setOnlineUsers(users) {
   const list = i("online-users");
+  if (!list) return; // ✅ prevents null crash
+
   list.innerHTML = "";
   users.forEach(u => {
     const li = document.createElement("li");
     li.textContent = u;
-    li.style.fontWeight = u === currentUser ? "bold" : "normal";
+    if (u === currentUser) {
+      li.classList.add("current-user"); // use CSS instead of inline style
+    }
     list.appendChild(li);
   });
 }
