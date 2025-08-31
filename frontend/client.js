@@ -1,4 +1,4 @@
-const socket = io(location.hostname.includes("localhost") ? "http://localhost:3000" : "https://your-prod-url.com");
+const socket = io(location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
 
 const i = id => document.getElementById(id);
 const v = id => i(id).value;
