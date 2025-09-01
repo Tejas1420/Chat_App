@@ -263,18 +263,22 @@ socket.on("set-cookie", token => {
   document.cookie = `token=${token}; path=/; secure; samesite=strict`;
 });
 
-// client.js — CSP-safe logout binding
-const logoutBtn = document.getElementById("logout-btn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", function() {
-    document.cookie = "token=; path=/; max-age=0"; // clear JWT cookie
-    location.reload(); // log out
-  });
+// ---------------- LOGOUT ----------------
+function logout() {
+  document.cookie = "token=; path=/; max-age=0"; // clear JWT cookie
+  location.reload(); // log out
 }
 
+const logoutBtn = document.getElementById("logout-btn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", logout);
+}
+
+// ✅ Export the logout function
 export {
+  logout,  // now properly defined
   signUp, signIn, sendMessage, showScreen,
   addMessage, deleteMessage, editMessage,
   sendFriendRequest, acceptFriend, declineFriend,
-  openGroupChat, openDM, getCookie, logout
+  openGroupChat, openDM, getCookie
 };
