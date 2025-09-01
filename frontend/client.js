@@ -263,12 +263,14 @@ socket.on("set-cookie", token => {
   document.cookie = `token=${token}; path=/; secure; samesite=strict`;
 });
 
-function logout() {
-  document.cookie = "token=; path=/; max-age=0"; // clear cookie
-  location.reload(); // resets state and logs out
+// client.js — CSP-safe logout binding
+const logoutBtn = document.getElementById("logout-btn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", function() {
+    document.cookie = "token=; path=/; max-age=0"; // clear JWT cookie
+    location.reload(); // log out
+  });
 }
-
-document.getElementById("logout-btn")?.addEventListener("click", logout);
 
 export {
   signUp, signIn, sendMessage, showScreen,
