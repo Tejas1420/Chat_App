@@ -14,6 +14,8 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import DirectMessage from "./models/DirectMessage.js";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 
 
 const serviceAccountPath = path.resolve("./serviceAccountKey.json");
@@ -25,6 +27,9 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
+
+const JWT_SECRET = process.env.JWT_SECRET 
 
 // ===== 1️⃣ Redirect www → non-www =====
 app.use((req, res, next) => {
@@ -220,42 +225,73 @@ io.on("connection", (socket) => {
   console.log("handshake.address:", address || "None");
   console.log("   User-Agent:", ua);
 
+socket.on("token login", async (token) => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const username = decoded.username;
 
+    const user = await User.findOne({ username });
+    if (!user) return socket.emit("sign in error", "❌ Invalid token");
+
+    socket.data.username = username;
+    onlineUsers.add(username);
+    socket.join(username);
+
+    socket.emit("sign in success", username);
+    const msgs = await Message.find({}).limit(100);
+    socket.emit("previous messages", msgs);
+    io.emit("online users", Array.from(onlineUsers));
+  } catch {
+    socket.emit("sign in error", "❌ Token expired or invalid");
+  }
+});
   // 🟩 SIGN UP
   socket.on("sign up", async ({ username, password }) => {
-    try {
-      const exists = await User.findOne({ username });
-      if (exists) return socket.emit("sign up fail", "❌ Username already taken");
+  try {
+    const exists = await User.findOne({ username });
+    if (exists) return socket.emit("sign up error", "❌ Username already taken");
 
-      const newUser = new User({ username, password });
-      await newUser.save();
-      socket.emit("sign up success");
-    } catch {
-      socket.emit("sign up fail", "❌ Server error during sign-up");
-    }
-  });
+    const newUser = new User({ username, password });
+    await newUser.save();
 
+    // auto-login
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "7d" });
+    socket.data.username = username;
+    onlineUsers.add(username);
+    socket.join(username);
+
+    socket.emit("sign up success", username);
+    socket.emit("set-cookie", token);
+    io.emit("online users", Array.from(onlineUsers));
+  } catch (err) {
+    console.error(err);
+    socket.emit("sign up error", "❌ Server error during sign-up");
+  }
+});
   // 🟦 SIGN IN
   socket.on("sign in", async ({ username, password }) => {
-    try {
-      const user = await User.findOne({ username });
-      if (!user || user.password !== password)
-        return socket.emit("sign in fail", "❌ Invalid username or password.");
+  try {
+    const user = await User.findOne({ username });
+    if (!user || user.password !== password)
+      return socket.emit("sign in error", "❌ Invalid username or password.");
 
-      socket.data.username = username; // ✅ store username
-      onlineUsers.add(username);       // ✅ add to online list
-      io.emit("online users", Array.from(onlineUsers));
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "7d" });
 
-      socket.join(username); // ✅ personal room for DMs
+    socket.data.username = username;
+    onlineUsers.add(username);
+    socket.join(username);
 
-      socket.emit("sign in success", username);
-      const msgs = await Message.find({}).limit(100);
-      socket.emit("previous messages", msgs);
-    } catch (err) {
-      console.error("Sign-in error:", err);
-      socket.emit("sign in fail", "❌ Server error during sign-in");
-    }
-  });
+    socket.emit("sign in success", username);
+    socket.emit("set-cookie", token);
+
+    const msgs = await Message.find({}).limit(100);
+    socket.emit("previous messages", msgs);
+    io.emit("online users", Array.from(onlineUsers));
+  } catch (err) {
+    console.error(err);
+    socket.emit("sign in error", "❌ Server error during sign-in");
+  }
+});
 
   // 📩 Send Friend Request
   socket.on("send friend request", async (toUser) => {
