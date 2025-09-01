@@ -213,7 +213,10 @@ function updateTypingIndicator() {
 
 // ---------------- SOCKET EVENTS ----------------
 socket.on("sign in success", u => { currentUser = u; showScreen("chat-screen"); socket.emit("get sidebar"); });
-socket.on("sign up success", () => { alert("✅ Signed Up! Now Sign In"); showScreen("signin-screen"); });
+socket.on("sign up success", (username) => {
+  currentUser = username;
+  showScreen("chat-screen"); // directly go to chat
+});
 socket.on("sign in error", err => { alert("❌ " + err); i("signin-password").value = ""; });
 socket.on("sign up error", err => { alert("❌ " + err); i("signup-password").value = ""; i("signup-confirm-password").value = ""; });
 
@@ -247,9 +250,29 @@ i("add-friend-btn").addEventListener("click", sendFriendRequest);
 
 i("message-form").addEventListener("submit", e => { e.preventDefault(); sendMessage(); });
 
+function getCookie(name) {
+  return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
+}
+
+// auto-login if token exists
+const token = getCookie("token");
+if (token) socket.emit("token login", token);
+
+// save JWT sent from server
+socket.on("set-cookie", token => {
+  document.cookie = `token=${token}; path=/; secure; samesite=strict`;
+});
+
+function logout() {
+  document.cookie = "token=; path=/; max-age=0"; // clear cookie
+  location.reload(); // resets state and logs out
+}
+
+document.getElementById("logout-btn")?.addEventListener("click", logout);
+
 export {
   signUp, signIn, sendMessage, showScreen,
   addMessage, deleteMessage, editMessage,
   sendFriendRequest, acceptFriend, declineFriend,
-  openGroupChat, openDM
+  openGroupChat, openDM, getCookie, logout
 };
