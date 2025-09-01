@@ -17,6 +17,8 @@
     "helmet": "^8.1.0",
     "mongodb": "^6.18.0",
     "mongoose": "^8.16.4",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "jsonwebtoken": "^9.0.2",
+    "cookie-parser": "^1.4.6"
   }
 }
