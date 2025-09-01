@@ -260,7 +260,8 @@ if (token) socket.emit("token login", token);
 
 // save JWT sent from server
 socket.on("set-cookie", token => {
-  document.cookie = `token=${token}; path=/; secure; samesite=strict`;
+  const maxAge = 2 * 365 * 24 * 60 * 60; // 2 years in seconds
+  document.cookie = `token=${token}; path=/; secure; samesite=strict; max-age=${maxAge}`;
 });
 
 // ---------------- LOGOUT ----------------
