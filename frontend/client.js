@@ -280,15 +280,19 @@ socket.on("message edited", msg => {
 });
 socket.on("online users", setOnlineUsers);
 // update reactions in real-time
+
 socket.on("reaction updated", ({ msgId, reactions }) => {
   const msgEl = i(msgId);
-  if(!msgEl) return;
+  if (!msgEl) return;
   const reactionsDiv = msgEl.querySelector(".reactions");
-  if(reactionsDiv) {
+  if (reactionsDiv) {
     reactionsDiv.innerHTML = "";
-    for(const [emoji, users] of Object.entries(reactions)){
+    for (const [emoji, users] of Object.entries(reactions)) {
       const span = document.createElement("span");
       span.textContent = `${emoji} ${users.length}`;
+      span.addEventListener("click", () => {
+        socket.emit(users.includes(currentUser) ? "remove reaction" : "add reaction", { msgId, emoji });
+      });
       reactionsDiv.appendChild(span);
     }
   }
