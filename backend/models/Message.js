@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
 
-const messageSchema = new mongoose.Schema({
+const MessageSchema = new mongoose.Schema({
   username: String,
   text: String,
   time: String,
-  date: String
+  date: String,
+  reactions: { type: Map, of: [String], default: {} }, // emoji → [usernames]
+  seen: { type: [String], default: [] }
 });
 
 export default mongoose.model("Message", messageSchema);
