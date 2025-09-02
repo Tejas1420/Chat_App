@@ -510,6 +510,10 @@ date: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }),
 
   io.to(from).emit("direct message", saved);
   io.to(to).emit("direct message", saved);
+// ✅ mark sender as delivered instantly
+await DirectMessage.findByIdAndUpdate(saved._id, {
+  $addToSet: { deliveredTo: from }
+});
 });
 
 // 📜 Load DM history
