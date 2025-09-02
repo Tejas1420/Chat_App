@@ -406,7 +406,12 @@ date: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
     };
 
     const saved = await Message.create(fullMsg);
-    io.emit("chat message", saved);
+io.emit("chat message", saved);
+
+// ✅ mark sender as delivered instantly
+await Message.findByIdAndUpdate(saved._id, {
+  $addToSet: { deliveredTo: username }
+});
 
     const payload = {
       notification: {
