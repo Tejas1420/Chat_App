@@ -102,7 +102,7 @@ function addMessage(msg) {
 
   const textDiv = document.createElement("div");
   textDiv.className = "text";
-  textDiv.textContent = msg.text;
+  textDiv.textContent = decodeForDisplay(msg.text);
 
   bubble.appendChild(meta);
   bubble.appendChild(textDiv);
