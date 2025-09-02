@@ -94,7 +94,31 @@ function addMessage(msg) {
 
   bubble.appendChild(meta);
   bubble.appendChild(textDiv);
+// Reactions container
+const reactionsDiv = document.createElement("div");
+reactionsDiv.className = "reactions";
+if(msg.reactions){
+  for(const [emoji, users] of Object.entries(msg.reactions)){
+    const span = document.createElement("span");
+    span.textContent = `${emoji} ${users.length}`;
+    span.addEventListener("click", () => {
+      socket.emit(users.includes(currentUser) ? "remove reaction" : "add reaction", { msgId: msg._id, emoji });
+    });
+    reactionsDiv.appendChild(span);
+  }
+}
+bubble.appendChild(reactionsDiv);
 
+// Seen-by container
+const seenDiv = document.createElement("div");
+seenDiv.className = "seen-by";
+if(msg.seen?.length) seenDiv.textContent = "Seen by: " + msg.seen.join(", ");
+bubble.appendChild(seenDiv);
+
+// Emit "message seen" when message comes into view
+if(currentChat.type === "group" || currentChat.type === "dm") {
+  socket.emit("message seen", msg._id);
+}
   if (mine) {
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "🗑️";
