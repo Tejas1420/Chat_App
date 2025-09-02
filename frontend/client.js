@@ -144,19 +144,19 @@ if(currentChat.type === "group" || currentChat.type === "dm") {
     });
 
     const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️";
-    editBtn.addEventListener("click", () => {
-      const current = decodeForDisplay(msg.text);
-const text = prompt("Edit:", current);
-      if (!text?.trim()) return;
-      textDiv.textContent = text; // update DOM
-      msg.text = text; // update local object
-      if (currentChat.type === "group") {
-        socket.emit("edit message", { id: msg._id, newText: text });
-      } else if (currentChat.type === "dm") {
-        socket.emit("edit dm", { to: currentChat.friend, id: msg._id, newText: text });
-      }
-    });
+editBtn.textContent = "✏️";
+editBtn.addEventListener("click", () => {
+  const current = decodeForDisplay(msg.text);
+  const text = prompt("Edit:", current);
+  if (!text?.trim()) return;
+  textDiv.textContent = decodeForDisplay(text); // show decoded
+  msg.text = text; // local copy (server sanitizes again)
+  if (currentChat.type === "group") {
+    socket.emit("edit message", { id: msg._id, newText: text });
+  } else if (currentChat.type === "dm") {
+    socket.emit("edit dm", { to: currentChat.friend, id: msg._id, newText: text });
+  }
+});
 
     bubble.appendChild(deleteBtn);
     bubble.appendChild(editBtn);
