@@ -8,6 +8,18 @@ let typingTimeout;
 let currentChat = { type: "group", friend: null };
 const typingUsers = new Set();
 
+// Decode a *small allowlist* of HTML entities so users see normal symbols.
+// Then ALWAYS render with textContent (NOT innerHTML).
+function decodeForDisplay(str) {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")  // matches your server's &#039;
+    .replace(/&amp;/g, "&");
+}
+
 // ---------------- DOM-SAFE LIST UPDATES ----------------
 function setFriendsList(friends) {
   const list = i("friends-dm-list");
