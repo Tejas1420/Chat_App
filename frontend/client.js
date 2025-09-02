@@ -298,14 +298,40 @@ socket.on("reaction updated", ({ msgId, reactions }) => {
   }
 });
 
-// update seen
-socket.on("message seen", ({ msgId, username }) => {
+socket.on("message delivered", ({ msgId }) => {
   const msgEl = i(msgId);
-  if(!msgEl) return;
-  const seenDiv = msgEl.querySelector(".seen-by");
-  if(seenDiv) {
-    if(seenDiv.textContent) seenDiv.textContent += ", " + username;
-    else seenDiv.textContent = "Seen by: " + username;
+  if (!msgEl) return;
+  const ticks = msgEl.querySelector(".ticks");
+  if (ticks) {
+    ticks.textContent = "✓✓";
+    ticks.classList.remove("sent");
+    ticks.classList.add("delivered");
+  }
+});
+
+socket.on("message seen", ({ msgId, username, chatType }) => {
+  const msgEl = i(msgId);
+  if (!msgEl) return;
+  const ticks = msgEl.querySelector(".ticks");
+
+  if (chatType === "dm") {
+    if (ticks) {
+      ticks.textContent = "✓✓";
+      ticks.classList.remove("delivered");
+      ticks.classList.add("seen");
+    }
+  } else if (chatType === "group") {
+    const seenDiv = msgEl.querySelector(".seen-by");
+    if (seenDiv && !seenDiv.textContent.includes(username)) {
+      seenDiv.textContent = seenDiv.textContent
+        ? seenDiv.textContent + ", " + username
+        : "Seen by: " + username;
+    }
+    if (ticks) {
+      ticks.textContent = "✓✓";
+      ticks.classList.remove("sent");
+      ticks.classList.add("delivered");
+    }
   }
 });
 
