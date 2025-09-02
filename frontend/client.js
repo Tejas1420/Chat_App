@@ -146,7 +146,8 @@ if(currentChat.type === "group" || currentChat.type === "dm") {
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
     editBtn.addEventListener("click", () => {
-      const text = prompt("Edit:", msg.text);
+      const current = decodeForDisplay(msg.text);
+const text = prompt("Edit:", current);
       if (!text?.trim()) return;
       textDiv.textContent = text; // update DOM
       msg.text = text; // update local object
