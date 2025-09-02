@@ -96,46 +96,60 @@ function addMessage(msg) {
   const bubble = document.createElement("div");
   bubble.className = "bubble";
 
+  // meta row (user, time, ticks)
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = `${sender} 🕒 ${msg.time || ""} 📅 ${msg.date || ""}`;
+  meta.textContent = `${sender} • ${msg.time || ""}`;
 
+  // ticks span
+  const ticks = document.createElement("span");
+  ticks.className = "ticks";
+  if (mine) {
+    ticks.textContent = msg.seen?.length ? "✓✓" : "✓";
+    if (msg.seen?.length) ticks.classList.add("blue"); // add CSS class for blue tick
+  }
+  meta.appendChild(ticks);
+
+  // main text
   const textDiv = document.createElement("div");
   textDiv.className = "text";
   textDiv.textContent = decodeForDisplay(msg.text);
 
   bubble.appendChild(meta);
   bubble.appendChild(textDiv);
-// Reactions container
-const reactionsDiv = document.createElement("div");
-reactionsDiv.className = "reactions";
-if(msg.reactions){
-  for(const [emoji, users] of Object.entries(msg.reactions)){
-    const span = document.createElement("span");
-    span.textContent = `${emoji} ${users.length}`;
-    span.addEventListener("click", () => {
-      socket.emit(users.includes(currentUser) ? "remove reaction" : "add reaction", { msgId: msg._id, emoji });
-    });
-    reactionsDiv.appendChild(span);
+
+  // reactions container
+  const reactionsDiv = document.createElement("div");
+  reactionsDiv.className = "reactions";
+  if (msg.reactions) {
+    for (const [emoji, users] of Object.entries(msg.reactions)) {
+      const span = document.createElement("span");
+      span.textContent = `${emoji} ${users.length}`;
+      span.addEventListener("click", () => {
+        socket.emit(users.includes(currentUser) ? "remove reaction" : "add reaction", { msgId: msg._id, emoji });
+      });
+      reactionsDiv.appendChild(span);
+    }
   }
-}
-bubble.appendChild(reactionsDiv);
+  bubble.appendChild(reactionsDiv);
 
-// Seen-by container
-const seenDiv = document.createElement("div");
-seenDiv.className = "seen-by";
-if(msg.seen?.length) seenDiv.textContent = "Seen by: " + msg.seen.join(", ");
-bubble.appendChild(seenDiv);
+  // seen-by list (names)
+  const seenDiv = document.createElement("div");
+  seenDiv.className = "seen-by";
+  if (msg.seen?.length) seenDiv.textContent = "Seen by: " + msg.seen.join(", ");
+  bubble.appendChild(seenDiv);
 
-// Emit "message seen" when message comes into view
-if(currentChat.type === "group" || currentChat.type === "dm") {
-  socket.emit("message seen", msg._id);
-}
+  // emit "message seen" if it’s not your own
+  if (!mine && (currentChat.type === "group" || currentChat.type === "dm")) {
+    socket.emit("message seen", msg._id);
+  }
+
+  // edit/delete for own messages
   if (mine) {
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "🗑️";
     deleteBtn.addEventListener("click", () => {
-      li.remove(); // remove from DOM immediately
+      li.remove();
       if (currentChat.type === "group") {
         socket.emit("delete message", msg._id);
       } else if (currentChat.type === "dm") {
@@ -144,19 +158,19 @@ if(currentChat.type === "group" || currentChat.type === "dm") {
     });
 
     const editBtn = document.createElement("button");
-editBtn.textContent = "✏️";
-editBtn.addEventListener("click", () => {
-  const current = decodeForDisplay(msg.text);
-  const text = prompt("Edit:", current);
-  if (!text?.trim()) return;
-  textDiv.textContent = decodeForDisplay(text); // show decoded
-  msg.text = text; // local copy (server sanitizes again)
-  if (currentChat.type === "group") {
-    socket.emit("edit message", { id: msg._id, newText: text });
-  } else if (currentChat.type === "dm") {
-    socket.emit("edit dm", { to: currentChat.friend, id: msg._id, newText: text });
-  }
-});
+    editBtn.textContent = "✏️";
+    editBtn.addEventListener("click", () => {
+      const current = decodeForDisplay(msg.text);
+      const text = prompt("Edit:", current);
+      if (!text?.trim()) return;
+      textDiv.textContent = decodeForDisplay(text);
+      msg.text = text;
+      if (currentChat.type === "group") {
+        socket.emit("edit message", { id: msg._id, newText: text });
+      } else if (currentChat.type === "dm") {
+        socket.emit("edit dm", { to: currentChat.friend, id: msg._id, newText: text });
+      }
+    });
 
     bubble.appendChild(deleteBtn);
     bubble.appendChild(editBtn);
