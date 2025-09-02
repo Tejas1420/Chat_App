@@ -263,6 +263,31 @@ socket.on("direct message", msg => {
 socket.on("message deleted", id => i(id)?.remove());
 socket.on("message edited", msg => { const el = i(msg._id)?.querySelector(".text"); if (el) el.textContent = msg.text; });
 socket.on("online users", setOnlineUsers);
+// update reactions in real-time
+socket.on("reaction updated", ({ msgId, reactions }) => {
+  const msgEl = i(msgId);
+  if(!msgEl) return;
+  const reactionsDiv = msgEl.querySelector(".reactions");
+  if(reactionsDiv) {
+    reactionsDiv.innerHTML = "";
+    for(const [emoji, users] of Object.entries(reactions)){
+      const span = document.createElement("span");
+      span.textContent = `${emoji} ${users.length}`;
+      reactionsDiv.appendChild(span);
+    }
+  }
+});
+
+// update seen
+socket.on("message seen", ({ msgId, username }) => {
+  const msgEl = i(msgId);
+  if(!msgEl) return;
+  const seenDiv = msgEl.querySelector(".seen-by");
+  if(seenDiv) {
+    if(seenDiv.textContent) seenDiv.textContent += ", " + username;
+    else seenDiv.textContent = "Seen by: " + username;
+  }
+});
 
 // ---------------- FORM + BUTTON HANDLERS ----------------
 i("signup-btn").addEventListener("click", signUp);
