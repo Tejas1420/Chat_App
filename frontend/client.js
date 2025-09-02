@@ -274,7 +274,10 @@ socket.on("direct message", msg => {
   else if (msg.to === currentUser) highlightDM(msg.from);
 });
 socket.on("message deleted", id => i(id)?.remove());
-socket.on("message edited", msg => { const el = i(msg._id)?.querySelector(".text"); if (el) el.textContent = msg.text; });
+socket.on("message edited", msg => {
+  const el = i(msg._id)?.querySelector(".text");
+  if (el) el.textContent = decodeForDisplay(msg.text);
+});
 socket.on("online users", setOnlineUsers);
 // update reactions in real-time
 socket.on("reaction updated", ({ msgId, reactions }) => {
