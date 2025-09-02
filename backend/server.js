@@ -348,7 +348,19 @@ socket.on("token login", async (token) => {
     }
   });
 
+socket.on("message seen", async (msgId) => {
+  const username = socket.data.username;
+  if (!username) return;
 
+  let msg = await Message.findById(msgId) || await DirectMessage.findById(msgId);
+  if(!msg) return;
+
+  if(!msg.seen.includes(username)){
+    msg.seen.push(username);
+    await msg.save();
+    io.emit("message seen", { msgId, username });
+  }
+});
   // 🟨 CHAT MESSAGE
   socket.on("chat message", async (msg) => {
     const now = Date.now();
