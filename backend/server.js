@@ -572,6 +572,27 @@ socket.on("edit dm", async ({ to, id, newText }) => {
     console.error("DM edit error:", err);
   }
 });
+// ✅ mark as delivered when client confirms
+socket.on("delivered", async ({ msgId, username, type }) => {
+  const Model = type === "dm" ? DirectMessage : Message;
+  await Model.findByIdAndUpdate(msgId, {
+    $addToSet: { deliveredTo: username }
+  });
+
+  // broadcast update
+  io.emit("delivered update", { msgId, username, type });
+});
+
+// ✅ mark as seen when chat opened
+socket.on("seen", async ({ msgId, username, type }) => {
+  const Model = type === "dm" ? DirectMessage : Message;
+  await Model.findByIdAndUpdate(msgId, {
+    $addToSet: { seenBy: username }
+  });
+
+  // broadcast update
+  io.emit("seen update", { msgId, username, type });
+});
   // Handle disconnect
   socket.on("disconnect", () => {
     if (socket.data.username) {
