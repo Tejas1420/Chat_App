@@ -8,6 +8,8 @@ const DirectMessageSchema = new mongoose.Schema({
   date: String,
   reactions: { type: Map, of: [String], default: {} },
   seen: { type: [String], default: [] }
+deliveredTo: [String], // usernames who got it
+  seenBy: [String],      // usernames who read it
 });
 
 export default mongoose.model("DirectMessage", directMessageSchema);
