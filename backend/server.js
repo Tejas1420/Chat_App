@@ -407,7 +407,38 @@ date: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
 
     sendPushNotificationToAll(payload);
   });
+// add reaction
+socket.on("add reaction", async ({ msgId, emoji }) => {
+  const username = socket.data.username;
+  if (!username) return;
 
+  let msg = await Message.findById(msgId) || await DirectMessage.findById(msgId);
+  if(!msg) return;
+
+  if(!msg.reactions.has(emoji)) msg.reactions.set(emoji, []);
+  const users = msg.reactions.get(emoji);
+  if(!users.includes(username)) users.push(username);
+  msg.reactions.set(emoji, users);
+
+  await msg.save();
+  io.emit("reaction updated", { msgId, reactions: Object.fromEntries(msg.reactions) });
+});
+
+// remove reaction
+socket.on("remove reaction", async ({ msgId, emoji }) => {
+  const username = socket.data.username;
+  if (!username) return;
+
+  let msg = await Message.findById(msgId) || await DirectMessage.findById(msgId);
+  if(!msg) return;
+
+  if(msg.reactions.has(emoji)){
+    msg.reactions.set(emoji, msg.reactions.get(emoji).filter(u => u !== username));
+    if(msg.reactions.get(emoji).length === 0) msg.reactions.delete(emoji);
+    await msg.save();
+    io.emit("reaction updated", { msgId, reactions: Object.fromEntries(msg.reactions) });
+  }
+});
   // ✅ Typing indicators
   socket.on("typing", () => {
     if (socket.data.username) {
