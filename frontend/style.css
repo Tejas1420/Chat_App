@@ -213,5 +213,13 @@ body.dark-mode #friend-requests {
   background-color: #ff7875;
 }
 
+.ticks {
+  margin-left: 6px;
+  font-size: 0.9em;
+  color: gray;
+}
+.ticks.blue {
+  color: dodgerblue;
+}
 
 /* made by Tejas Singh */
