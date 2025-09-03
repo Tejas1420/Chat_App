@@ -11,5 +11,5 @@ const MessageSchema = new mongoose.Schema({
   seenBy: [String],      // usernames who read it
 });
 
-export default mongoose.model("Message", messageSchema);
+export default mongoose.model("Message", MessageSchema);
 // made by tejas singh
