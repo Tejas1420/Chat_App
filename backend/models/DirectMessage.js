@@ -7,8 +7,8 @@ const DirectMessageSchema = new mongoose.Schema({
   time: String,
   date: String,
   reactions: { type: Map, of: [String], default: {} },
-  seen: { type: [String], default: [] }
-deliveredTo: [String], // usernames who got it
+  seen: { type: [String], default: [] },
+  deliveredTo: [String], // usernames who got it
   seenBy: [String],      // usernames who read it
 });
 
