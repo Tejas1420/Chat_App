@@ -1,3 +1,4 @@
+// made by tejas singh
 const socket = io(location.hostname.includes("localhost") ? "http://localhost:3000" : "https://chat-app-4x3l.onrender.com");
 
 const i = id => document.getElementById(id);
@@ -23,6 +24,7 @@ function decodeForDisplay(str) {
 // ---------------- DOM-SAFE LIST UPDATES ----------------
 function setFriendsList(friends) {
   const list = i("friends-dm-list");
+  if (!list) return;
   list.innerHTML = "";
   friends.forEach(f => {
     const li = document.createElement("li");
@@ -38,6 +40,7 @@ function setFriendsList(friends) {
 
 function setFriendRequestsList(requests) {
   const list = i("friend-requests");
+  if (!list) return;
   list.innerHTML = "";
   requests.forEach(r => {
     const li = document.createElement("li");
@@ -72,17 +75,60 @@ function setOnlineUsers(users) {
 // ---------------- EVENT HANDLERS ----------------
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(div => div.classList.remove("active"));
-  i(id).classList.add("active");
+  const el = i(id);
+  if (el) el.classList.add("active");
 }
 
-function signUp() {
+// Swap to HTTP signup/login that sets HttpOnly cookie OR fallback to socket methods
+async function signup() {
   const u = v("signup-username"), p = v("signup-password"), c = v("signup-confirm-password");
   if (p !== c) return alert("Passwords don’t match!");
-  socket.emit("sign up", { username: u, password: p });
+  try {
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if (res.ok) {
+      currentUser = u;
+      showScreen("chat-screen");
+      // After HTTP signup, try token login from cookie
+      const token = getCookie("token");
+      if (token) socket.emit("token login", token);
+      socket.emit("get sidebar");
+    } else {
+      const json = await res.json().catch(() => ({}));
+      alert("❌ " + (json.error || "Signup failed"));
+    }
+  } catch (e) {
+    // fallback to socket signup if HTTP fails
+    socket.emit("sign up", { username: u, password: p });
+  }
 }
 
-function signIn() {
-  socket.emit("sign in", { username: v("signin-username"), password: v("signin-password") });
+async function signIn() {
+  const username = v("signin-username"), password = v("signin-password");
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    if (res.ok) {
+      currentUser = username;
+      showScreen("chat-screen");
+      const token = getCookie("token");
+      if (token) socket.emit("token login", token);
+      socket.emit("get sidebar");
+    } else {
+      const json = await res.json().catch(() => ({}));
+      alert("❌ " + (json.error || "Login failed"));
+      i("signin-password").value = "";
+    }
+  } catch (e) {
+    // fallback to socket sign in if HTTP fails
+    socket.emit("sign in", { username, password });
+  }
 }
 
 // ---------------- CHAT HANDLERS ----------------
@@ -91,7 +137,7 @@ function addMessage(msg) {
   const mine = sender === currentUser;
 
   const li = document.createElement("li");
-  li.id = msg._id;
+  if (msg._id) li.id = msg._id;
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
@@ -105,8 +151,8 @@ function addMessage(msg) {
   const ticks = document.createElement("span");
   ticks.className = "ticks";
   if (mine) {
-    ticks.textContent = msg.seen?.length ? "✓✓" : "✓";
-    if (msg.seen?.length) ticks.classList.add("blue"); // add CSS class for blue tick
+    ticks.textContent = (msg.seenBy?.length) ? "✓✓" : (msg.deliveredTo?.length ? "✓✓" : "✓");
+    if (msg.seenBy?.length) ticks.classList.add("blue"); // add CSS class for blue tick
   }
   meta.appendChild(ticks);
 
@@ -122,7 +168,13 @@ function addMessage(msg) {
   const reactionsDiv = document.createElement("div");
   reactionsDiv.className = "reactions";
   if (msg.reactions) {
-    for (const [emoji, users] of Object.entries(msg.reactions)) {
+    // msg.reactions might be Map or object
+    let entries;
+    if (msg.reactions instanceof Map) entries = Array.from(msg.reactions.entries());
+    else if (typeof msg.reactions === "object") entries = Object.entries(msg.reactions);
+    else entries = [];
+
+    for (const [emoji, users] of entries) {
       const span = document.createElement("span");
       span.textContent = `${emoji} ${users.length}`;
       span.addEventListener("click", () => {
@@ -136,12 +188,12 @@ function addMessage(msg) {
   // seen-by list (names)
   const seenDiv = document.createElement("div");
   seenDiv.className = "seen-by";
-  if (msg.seen?.length) seenDiv.textContent = "Seen by: " + msg.seen.join(", ");
+  if (msg.seenBy?.length) seenDiv.textContent = "Seen by: " + msg.seenBy.join(", ");
   bubble.appendChild(seenDiv);
 
   // emit "message seen" if it’s not your own
   if (!mine && (currentChat.type === "group" || currentChat.type === "dm")) {
-    socket.emit("message seen", msg._id);
+    if (msg._id) socket.emit("message seen", msg._id);
   }
 
   // edit/delete for own messages
@@ -177,7 +229,10 @@ function addMessage(msg) {
   }
 
   li.appendChild(bubble);
-  i("messages").appendChild(li);
+  const container = i("messages");
+  if (container) container.appendChild(li);
+  // scroll to bottom
+  if (container) container.scrollTop = container.scrollHeight;
 }
 
 function deleteMessage(id) { socket.emit("delete message", id); }
@@ -208,7 +263,8 @@ function sendMessage() {
     addMessage(msg);
     socket.emit("direct message", { to: currentChat.friend, text });
   }
-  i("message").value = "";
+  const input = i("message");
+  if (input) input.value = "";
   socket.emit("stop typing");
 }
 
@@ -218,15 +274,19 @@ function declineFriend(u) { socket.emit("decline friend request", u); }
 
 function openGroupChat() {
   currentChat = { type: "group", friend: null };
-  i("chat-title").textContent = "🌍 Group Chat";
-  i("messages").innerHTML = "";
+  const title = i("chat-title");
+  if (title) title.textContent = "🌍 Group Chat";
+  const container = i("messages");
+  if (container) container.innerHTML = "";
   socket.emit("get group messages");
 }
 
 function openDM(friend) {
   currentChat = { type: "dm", friend, loaded: false };
-  i("chat-title").textContent = "💬 DM with " + friend;
-  i("messages").innerHTML = "";
+  const title = i("chat-title");
+  if (title) title.textContent = "💬 DM with " + friend;
+  const container = i("messages");
+  if (container) container.innerHTML = "";
 
   const btn = document.querySelector(`.dm-btn[data-user="${friend}"]`);
   if (btn) btn.classList.remove("new-message");
@@ -235,11 +295,14 @@ function openDM(friend) {
 }
 
 // ---------------- TYPING INDICATOR ----------------
-i("message").addEventListener("input", () => {
-  socket.emit("typing");
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => socket.emit("stop typing"), 1000);
-});
+const messageInput = i("message");
+if (messageInput) {
+  messageInput.addEventListener("input", () => {
+    socket.emit("typing");
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => socket.emit("stop typing"), 1000);
+  });
+}
 
 socket.on("typing", (username) => {
   if (username !== currentUser) typingUsers.add(username);
@@ -253,6 +316,7 @@ socket.on("stop typing", (username) => {
 
 function updateTypingIndicator() {
   const indicator = i("typing-indicator");
+  if (!indicator) return;
   const users = [...typingUsers];
 
   if (users.length === 0) indicator.textContent = "";
@@ -268,40 +332,46 @@ socket.on("sign up success", (username) => {
   currentUser = username;
   showScreen("chat-screen"); // directly go to chat
 });
-socket.on("sign in error", err => { alert("❌ " + err); i("signin-password").value = ""; });
-socket.on("sign up error", err => { alert("❌ " + err); i("signup-password").value = ""; i("signup-confirm-password").value = ""; });
+socket.on("sign in error", err => { alert("❌ " + err); const p = i("signin-password"); if (p) p.value = ""; });
+socket.on("sign up error", err => { alert("❌ " + err); const p = i("signup-password"); if (p) p.value = ""; const c = i("signup-confirm-password"); if (c) c.value = ""; });
 
 socket.on("sidebar data", ({ friends, friendRequests }) => {
-  setFriendsList(friends);
-  setFriendRequestsList(friendRequests);
+  setFriendsList(friends || []);
+  setFriendRequestsList(friendRequests || []);
 });
 
 socket.on("sidebar update", (user) => { if (user === currentUser) socket.emit("get sidebar"); });
 
-socket.on("previous messages", msgs => { i("messages").innerHTML = ""; msgs.forEach(addMessage); });
+socket.on("previous messages", msgs => { const container = i("messages"); if(container){ container.innerHTML = ""; (msgs||[]).forEach(addMessage); } });
 socket.on("chat message", addMessage);
 socket.on("direct messages", ({ friend, msgs }) => {
-  if (currentChat.type === "dm" && currentChat.friend === friend) { i("messages").innerHTML = ""; msgs.forEach(addMessage); currentChat.loaded = true; }
+  if (currentChat.type === "dm" && currentChat.friend === friend) { const container = i("messages"); if(container){ container.innerHTML = ""; (msgs||[]).forEach(addMessage); currentChat.loaded = true; } }
 });
 socket.on("direct message", msg => {
   if (currentChat.type === "dm" && (msg.from === currentChat.friend || msg.to === currentUser)) addMessage(msg);
   else if (msg.to === currentUser) highlightDM(msg.from);
 });
-socket.on("message deleted", id => i(id)?.remove());
+socket.on("message deleted", id => {
+  const el = i(id);
+  if (el) el.remove();
+});
 socket.on("message edited", msg => {
   const el = i(msg._id)?.querySelector(".text");
   if (el) el.textContent = decodeForDisplay(msg.text);
 });
 socket.on("online users", setOnlineUsers);
-// update reactions in real-time
 
+// reaction updated (kept)
 socket.on("reaction updated", ({ msgId, reactions }) => {
   const msgEl = i(msgId);
   if (!msgEl) return;
   const reactionsDiv = msgEl.querySelector(".reactions");
   if (reactionsDiv) {
     reactionsDiv.innerHTML = "";
-    for (const [emoji, users] of Object.entries(reactions)) {
+    let entries;
+    if (reactions instanceof Map) entries = Array.from(reactions.entries());
+    else entries = Object.entries(reactions || {});
+    for (const [emoji, users] of entries) {
       const span = document.createElement("span");
       span.textContent = `${emoji} ${users.length}`;
       span.addEventListener("click", () => {
@@ -312,7 +382,8 @@ socket.on("reaction updated", ({ msgId, reactions }) => {
   }
 });
 
-socket.on("message delivered", ({ msgId }) => {
+// ====== UNIFIED delivered/seen updates ======
+socket.on("delivered update", ({ msgId, username, type }) => {
   const msgEl = i(msgId);
   if (!msgEl) return;
   const ticks = msgEl.querySelector(".ticks");
@@ -323,18 +394,18 @@ socket.on("message delivered", ({ msgId }) => {
   }
 });
 
-socket.on("message seen", ({ msgId, username, chatType }) => {
+socket.on("seen update", ({ msgId, username, type }) => {
   const msgEl = i(msgId);
   if (!msgEl) return;
   const ticks = msgEl.querySelector(".ticks");
 
-  if (chatType === "dm") {
+  if (type === "dm") {
     if (ticks) {
       ticks.textContent = "✓✓";
       ticks.classList.remove("delivered");
       ticks.classList.add("seen");
     }
-  } else if (chatType === "group") {
+  } else if (type === "group") {
     const seenDiv = msgEl.querySelector(".seen-by");
     if (seenDiv && !seenDiv.textContent.includes(username)) {
       seenDiv.textContent = seenDiv.textContent
@@ -350,27 +421,45 @@ socket.on("message seen", ({ msgId, username, chatType }) => {
 });
 
 // ---------------- FORM + BUTTON HANDLERS ----------------
-i("signup-btn").addEventListener("click", signUp);
-i("signin-btn").addEventListener("click", signIn);
-i("signup-switch-btn").addEventListener("click", () => showScreen("signup-screen"));
-i("signin-switch-btn").addEventListener("click", () => showScreen("signin-screen"));
-i("group-chat-btn").addEventListener("click", openGroupChat);
-i("add-friend-btn").addEventListener("click", sendFriendRequest);
+const signupBtn = i("signup-btn");
+if (signupBtn) signupBtn.addEventListener("click", signup);
 
-i("message-form").addEventListener("submit", e => { e.preventDefault(); sendMessage(); });
+const signinBtn = i("signin-btn");
+if (signinBtn) signinBtn.addEventListener("click", signIn);
 
+const signupSwitchBtn = i("signup-switch-btn");
+if (signupSwitchBtn) signupSwitchBtn.addEventListener("click", () => showScreen("signup-screen"));
+
+const signinSwitchBtn = i("signin-switch-btn");
+if (signinSwitchBtn) signinSwitchBtn.addEventListener("click", () => showScreen("signin-screen"));
+
+const groupChatBtn = i("group-chat-btn");
+if (groupChatBtn) groupChatBtn.addEventListener("click", openGroupChat);
+
+const addFriendBtn = i("add-friend-btn");
+if (addFriendBtn) addFriendBtn.addEventListener("click", sendFriendRequest);
+
+const messageForm = i("message-form");
+if (messageForm) messageForm.addEventListener("submit", e => { e.preventDefault(); sendMessage(); });
+
+// cookie helper
 function getCookie(name) {
   return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
 }
 
-// auto-login if token exists
+// auto-login if token cookie exists
 const token = getCookie("token");
 if (token) socket.emit("token login", token);
 
-// save JWT sent from server
+// handle set-cookie from socket fallback (still kept for compatibility)
+// this is a best-effort fallback only; real secure cookie should be set via HTTP
 socket.on("set-cookie", token => {
-  const maxAge = 2 * 365 * 24 * 60 * 60; // 2 years in seconds
-  document.cookie = `token=${token}; path=/; secure; samesite=strict; max-age=${maxAge}`;
+  try {
+    const maxAge = 2 * 365 * 24 * 60 * 60; // 2 years in seconds
+    document.cookie = `token=${token}; path=/; secure; samesite=strict; max-age=${maxAge}`;
+  } catch (e) {
+    console.warn("Could not set cookie from socket", e);
+  }
 });
 
 // ---------------- LOGOUT ----------------
@@ -384,10 +473,23 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", logout);
 }
 
-// ✅ Export the logout function
+// ---------------- PUSH TOKEN registration helper (if you use FCM in frontend) ----------------
+async function registerPushToken(username, fcmToken) {
+  try {
+    await fetch("/api/register-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, fcmToken })
+    });
+  } catch (e) {
+    console.warn("Failed to register push token", e);
+  }
+}
+
+// ✅ Export the logout function and helpers (kept)
 export {
-  logout,  // now properly defined
-  signUp, signIn, sendMessage, showScreen,
+  logout,
+  signup, signIn, sendMessage, showScreen,
   addMessage, deleteMessage, editMessage,
   sendFriendRequest, acceptFriend, declineFriend,
   openGroupChat, openDM, getCookie
