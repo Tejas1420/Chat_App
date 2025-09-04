@@ -147,14 +147,14 @@ function addMessage(msg) {
   meta.className = "meta";
   meta.textContent = `${sender} • ${msg.time || ""}`;
 
-  // ticks span
-  const ticks = document.createElement("span");
-  ticks.className = "ticks";
+  // ticks span (only show for own messages)
   if (mine) {
+    const ticks = document.createElement("span");
+    ticks.className = "ticks";
     ticks.textContent = (msg.seenBy?.length) ? "✓✓" : (msg.deliveredTo?.length ? "✓✓" : "✓");
-    if (msg.seenBy?.length) ticks.classList.add("blue"); // add CSS class for blue tick
+    if (msg.seenBy?.length) ticks.classList.add("blue");
+    meta.appendChild(ticks);
   }
-  meta.appendChild(ticks);
 
   // main text
   const textDiv = document.createElement("div");
