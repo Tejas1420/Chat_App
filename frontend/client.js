@@ -397,6 +397,14 @@ socket.on("delivered update", ({ msgId, username, type }) => {
 socket.on("seen update", ({ msgId, username, type }) => {
   const msgEl = i(msgId);
   if (!msgEl) return;
+
+  // ✅ Only update if this message belongs to me
+  const meta = msgEl.querySelector(".meta");
+  if (!meta) return;
+  const isMine = meta.textContent.startsWith(currentUser);
+
+  if (!isMine) return; // 🔒 block updates for non-owned messages
+
   const ticks = msgEl.querySelector(".ticks");
 
   if (type === "dm") {
@@ -406,6 +414,7 @@ socket.on("seen update", ({ msgId, username, type }) => {
       ticks.classList.add("seen");
     }
   } else if (type === "group") {
+    // optional: seen-by list (only visible to sender)
     const seenDiv = msgEl.querySelector(".seen-by");
     if (seenDiv && !seenDiv.textContent.includes(username)) {
       seenDiv.textContent = seenDiv.textContent
@@ -419,7 +428,6 @@ socket.on("seen update", ({ msgId, username, type }) => {
     }
   }
 });
-
 // ---------------- FORM + BUTTON HANDLERS ----------------
 const signupBtn = i("signup-btn");
 if (signupBtn) signupBtn.addEventListener("click", signup);
