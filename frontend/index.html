@@ -2,100 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Group Chat Application with Sign Up, Sign In, and Real-time Messaging Features.">
-  <meta name="keywords" content="Group Chat, Direct Messages, Friends, Real-time Chat">
-  <meta name="author" content="Tejas Singh"> 
-  <title>Group Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Group Chat App</title>
+
+  <!-- Metadata -->
+  <meta name="description" content="Realtime chat app with groups, direct messages, and friend system." />
+  <meta name="keywords" content="chat, messaging, realtime, WebSocket, group chat, DMs" />
+  <meta name="author" content="Tejas Singh" />
+  <meta name="theme-color" content="#0a0a0a" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Group Chat App" />
+  <meta property="og:description" content="Realtime chat with groups, DMs, and push notifications." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://chat-app-4x3l.onrender.com/" />
+  <meta property="og:image" content="/icon-192.png" />
+
+  <!-- Manifest & favicon -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Auth -->
+  <div id="auth-section">
+    <h2>Sign Up</h2>
+    <input id="signup-username" type="text" placeholder="Username" autocomplete="username" />
+    <input id="signup-password" type="password" placeholder="Password" autocomplete="new-password" />
+    <button id="signup-btn" type="button">Sign Up</button>
 
-
-<div id="signup-screen" class="screen active">
-  <h2>🟩 Sign Up</h2>
-  <form id="signup-form">
-    <input id="signup-username" placeholder="Username" required /> <br>
-    <input id="signup-password" type="password" placeholder="Password" required /> <br>
-    <input id="signup-confirm-password" type="password" placeholder="Confirm Password" required /> <br>
-
-    <input id="signup-show-password" type="checkbox">
-    <label for="signup-show-password">Show password</label>
-    <br>
-
-    <button type="button" id="signup-btn">Sign Up</button>
-  </form>
-  <p>
-    Already have an account?
-    <button type="button" id="signin-switch-btn">Sign In</button>
-  </p>
-</div>
-
-
-<div id="signin-screen" class="screen">
-  <h2>🟦 Sign In</h2>
-  <form id="signin-form">
-    <input id="signin-username" placeholder="Username" required /> <br>
-    <input id="signin-password" type="password" placeholder="Password" required /> <br>
-
-    <input id="signin-show-password" type="checkbox">
-    <label for="signin-show-password">Show password</label>
-    <br>
-
-    <button type="button" id="signin-btn">Sign In</button>
-  </form>
-  <p>
-    New here?
-    <button type="button" id="signup-switch-btn">Sign Up</button>
-  </p>
-</div>
-
-
-<div id="chat-screen" class="screen">
-  <div id="chat-container">
-    
-    
-    <div id="sidebar">
-      <h3>Chats</h3>
-      <button id="group-chat-btn">🌍 Group Chat</button>
-
-      <h4>DMs</h4>
-      <ul id="friends-dm-list"></ul>
-
-      <h4>Friend Requests</h4>
-      <ul id="friend-requests"></ul>
-      <button id="add-friend-btn">➕ Add Friend</button>
-<button id="logout-btn">🚪 Logout</button>
-    </div>
-    
-    
-    <div id="chat-main">
-      <h2 id="chat-title">🌍 Group Chat</h2>
-      <button id="darkModeToggle">🌙</button>
-
-      
-      <ul id="messages"></ul>
-      
-      
-      <p id="typing-indicator"></p>
-      
-      
-      <form id="message-form">
-        <input id="message" autocomplete="off" placeholder="Type your message..." required />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-    
+    <h2>Sign In</h2>
+    <input id="signin-username" type="text" placeholder="Username" autocomplete="username" />
+    <input id="signin-password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="signin-btn" type="button">Sign In</button>
   </div>
-</div>
 
+  <!-- Main app -->
+  <div id="app" class="hidden">
+    <aside id="sidebar">
+      <h3>Friends</h3>
+      <ul id="friends-list"></ul>
 
-<script src="/socket.io/socket.io.js" defer></script>
-<script type="module" src="client.js" defer></script>
-<script type="module" src="buttons.js"></script>
-<script src="dark-mode.js"></script>
+      <h3>Friend Requests</h3>
+      <ul id="friend-requests"></ul>
 
+      <button id="add-friend-btn" type="button">➕ Add Friend</button>
+      <button id="create-group-btn" type="button">➕ Create Group</button>
+      <button id="dark-mode-btn" type="button">🌙 Toggle Dark</button>
+      <button id="logout-btn" type="button">🚪 Logout</button>
+    </aside>
+
+    <main id="chat">
+      <div id="chat-header">
+        <h2 id="chat-title">Group Chat</h2>
+      </div>
+      <div id="messages"></div>
+      <div id="typing-indicator" class="hidden"></div>
+      <div id="chat-input">
+        <input id="message-input" type="text" placeholder="Type a message..." />
+        <button id="send-btn" type="button">Send</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/firebase-init.js"></script>
+  <script defer src="/client.js"></script>
+  <script defer src="/buttons.js"></script>
 </body>
 </html>
-
-<!-- made by Tejas Singh -->
