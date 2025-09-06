@@ -1,67 +1,74 @@
-import { 
-  signUp,
-  signIn,
-  sendMessage,
-  showScreen,
-  openDM,
-  sendFriendRequest,
-  acceptFriend,
-  declineFriend
-} from './client.js';
+// frontend/buttons.js
+// Button and input bindings (CSP safe)
+
+import { signup, signIn, sendMessage, logout, addFriend, createGroup, toggleDarkMode } from "./client.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-
+  // Auth
   const signupBtn = document.getElementById("signup-btn");
-  if (signupBtn) signupBtn.addEventListener("click", signUp);
-
   const signinBtn = document.getElementById("signin-btn");
-  if (signinBtn) signinBtn.addEventListener("click", signIn);
 
-  const signupSwitch = document.getElementById("signup-switch-btn");
-  if (signupSwitch) signupSwitch.addEventListener("click", () => showScreen("signup-screen"));
-
-  const signinSwitch = document.getElementById("signin-switch-btn");
-  if (signinSwitch) signinSwitch.addEventListener("click", () => showScreen("signin-screen"));
-
-  const darkToggle = document.getElementById("darkModeToggle");
-  if (darkToggle) {
-    darkToggle.addEventListener("click", () => {
-      if (typeof toggleDarkMode === "function") toggleDarkMode();
+  if (signupBtn) {
+    signupBtn.addEventListener("click", () => {
+      const username = document.getElementById("signup-username").value.trim();
+      const password = document.getElementById("signup-password").value.trim();
+      signup(username, password);
     });
   }
 
+  if (signinBtn) {
+    signinBtn.addEventListener("click", () => {
+      const username = document.getElementById("signin-username").value.trim();
+      const password = document.getElementById("signin-password").value.trim();
+      signIn(username, password);
+    });
+  }
+
+  // Chat send
+  const sendBtn = document.getElementById("send-btn");
+  const msgInput = document.getElementById("message-input");
+
+  if (sendBtn && msgInput) {
+    sendBtn.addEventListener("click", () => {
+      const text = msgInput.value.trim();
+      if (text) {
+        sendMessage(text);
+        msgInput.value = "";
+      }
+    });
+
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  }
+
+  // Sidebar actions
   const addFriendBtn = document.getElementById("add-friend-btn");
-  if (addFriendBtn) addFriendBtn.addEventListener("click", sendFriendRequest);
+  if (addFriendBtn) {
+    addFriendBtn.addEventListener("click", () => {
+      const friend = prompt("Enter username to add:");
+      if (friend) addFriend(friend.trim());
+    });
+  }
 
-  const signupShow = document.getElementById("signup-show-password");
-  if (signupShow) signupShow.addEventListener("change", function() {
-    togglePassword("signup-password", "signup-confirm-password", this.checked);
-  });
+  const createGroupBtn = document.getElementById("create-group-btn");
+  if (createGroupBtn) {
+    createGroupBtn.addEventListener("click", () => {
+      const group = prompt("Enter group name:");
+      if (group) createGroup(group.trim());
+    });
+  }
 
-  const signinShow = document.getElementById("signin-show-password");
-  if (signinShow) signinShow.addEventListener("change", function() {
-    togglePassword("signin-password", null, this.checked);
-  });
+  const darkBtn = document.getElementById("dark-mode-btn");
+  if (darkBtn) {
+    darkBtn.addEventListener("click", toggleDarkMode);
+  }
 
-  const msgForm = document.getElementById("message-form");
-  if (msgForm) msgForm.addEventListener("submit", e => {
-    e.preventDefault();
-    sendMessage();
-  });
-});
-
-// ---------------- Password Toggle ----------------
-function togglePassword(id1, id2, checked) {
-  const el1 = document.getElementById(id1);
-  const el2 = id2 ? document.getElementById(id2) : null;
-  const type = checked ? "text" : "password";
-  if (el1) el1.type = type;
-  if (el2) el2.type = type;
-}
-
-// ---------------- DM & Friend Request Buttons ----------------
-document.addEventListener("click", e => {
-  if (e.target.classList.contains("dm-btn")) openDM(e.target.dataset.user);
-  if (e.target.classList.contains("accept-btn")) acceptFriend(e.target.dataset.user);
-  if (e.target.classList.contains("decline-btn")) declineFriend(e.target.dataset.user);
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", logout);
+  }
 });
