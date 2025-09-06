@@ -1,24 +1,43 @@
 {
-  "name": "group-chat",
-  "version": "5.3.2",
-  "license": "Apache-2.0",
+  "name": "chat-app",
+  "version": "6.0.0",
+  "description": "Realtime chat app with groups, DMs, friend requests, push notifications, and security hardening.",
   "main": "backend/server.js",
   "type": "module",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
   },
   "dependencies": {
-    "body-parser": "^2.2.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
-    "express": "^4.21.2",
-    "express-rate-limit": "^8.0.1",
-    "firebase-admin": "^13.4.0",
-    "helmet": "^8.1.0",
-    "mongodb": "^6.18.0",
-    "mongoose": "^8.16.4",
-    "socket.io": "^4.7.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.1.5",
+    "firebase-admin": "^12.6.0",
+    "helmet": "^7.1.0",
+    "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
-    "cookie-parser": "^1.4.6"
-  }
+    "mongoose": "^7.6.3",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "chat",
+    "messaging",
+    "socket.io",
+    "express",
+    "realtime",
+    "firebase",
+    "dm",
+    "group-chat"
+  ],
+  "author": "Tejas Singh",
+  "license": "Apache 2.0"
 }
