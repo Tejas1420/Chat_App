@@ -80,7 +80,7 @@ function showScreen(id) {
 }
 
 // Swap to HTTP signup/login that sets HttpOnly cookie OR fallback to socket methods
-async function signup() {
+async function signUp() {
   const u = v("signup-username"), p = v("signup-password"), c = v("signup-confirm-password");
   if (p !== c) return alert("Passwords don’t match!");
   try {
@@ -419,7 +419,7 @@ socket.on("seen update", ({ msgId, username, type }) => {
 
 // ---------------- FORM + BUTTON HANDLERS ----------------
 const signupBtn = i("signup-btn");
-if (signupBtn) signupBtn.addEventListener("click", signup);
+if (signupBtn) signupBtn.addEventListener("click", signUp);
 
 const signinBtn = i("signin-btn");
 if (signinBtn) signinBtn.addEventListener("click", signIn);
@@ -485,7 +485,7 @@ async function registerPushToken(username, fcmToken) {
 // ✅ Export the logout function and helpers (kept)
 export {
   logout,
-  signup, signIn, sendMessage, showScreen,
+  signUp, signIn, sendMessage, showScreen,
   addMessage, deleteMessage, editMessage,
   sendFriendRequest, acceptFriend, declineFriend,
   openGroupChat, openDM, getCookie
