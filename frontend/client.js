@@ -84,11 +84,13 @@ async function signUp() {
   const u = v("signup-username"), p = v("signup-password"), c = v("signup-confirm-password");
   if (p !== c) return alert("Passwords don’t match!");
   try {
-    const res = await fetch("/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: u, password: p })
-    });
+const res = await fetch("/api/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username, password }),
+  credentials: "include"   // 🔥 ensures cookie is stored/sent
+});
+
     if (res.ok) {
       currentUser = u;
       showScreen("chat-screen");
