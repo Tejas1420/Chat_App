@@ -360,13 +360,12 @@ socket.on("message edited", msg => {
   if (el) el.textContent = decodeForDisplay(msg.text);
 });
 socket.on("online users", setOnlineUsers);
-
-// reaction updated (kept)
+// reaction updated (update reactions in real-time)
 socket.on("reaction updated", ({ msgId, reactions }) => {
   const msgEl = i(msgId);
-  if (!msgEl) return;
+  if(!msgEl) return;
   const reactionsDiv = msgEl.querySelector(".reactions");
-  if (reactionsDiv) {
+  if(reactionsDiv) {
     reactionsDiv.innerHTML = "";
     let entries;
     if (reactions instanceof Map) entries = Array.from(reactions.entries());
@@ -374,13 +373,11 @@ socket.on("reaction updated", ({ msgId, reactions }) => {
     for (const [emoji, users] of entries) {
       const span = document.createElement("span");
       span.textContent = `${emoji} ${users.length}`;
-      span.addEventListener("click", () => {
-        socket.emit(users.includes(currentUser) ? "remove reaction" : "add reaction", { msgId, emoji });
-      });
       reactionsDiv.appendChild(span);
     }
   }
 });
+// reaction updated (kept)
 
 // ====== UNIFIED delivered/seen updates ======
 socket.on("delivered update", ({ msgId, username, type }) => {
