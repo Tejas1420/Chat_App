@@ -461,7 +461,6 @@ socket.on("set-cookie", token => {
     console.warn("Could not set cookie from socket", e);
   }
 });
-
 // ---------------- LOGOUT ----------------
 function logout() {
   document.cookie = "token=; path=/; max-age=0"; // clear JWT cookie
