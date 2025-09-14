@@ -12,4 +12,4 @@ const DirectMessageSchema = new mongoose.Schema({
   seenBy: [String],      // usernames who read it
 });
 
-export default mongoose.model("DirectMessage", directMessageSchema);
+export default mongoose.model("DirectMessage", DirectMessageSchema);
