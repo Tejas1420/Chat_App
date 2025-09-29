@@ -329,11 +329,21 @@ function updateTypingIndicator() {
 }
 
 // ---------------- SOCKET EVENTS ----------------
-socket.on("sign in success", u => { currentUser = u; showScreen("chat-screen"); socket.emit("get sidebar"); });
+socket.on("sign in success", u => {
+  currentUser = u;
+  showScreen("chat-screen");
+  socket.emit("get sidebar");
+  // ✅ load group chat messages automatically
+  socket.emit("get group messages");
+});
+
 socket.on("sign up success", (username) => {
   currentUser = username;
   showScreen("chat-screen"); // directly go to chat
+  // ✅ load group chat messages automatically
+  socket.emit("get group messages");
 });
+
 socket.on("sign in error", err => { alert("❌ " + err); const p = i("signin-password"); if (p) p.value = ""; });
 socket.on("sign up error", err => { alert("❌ " + err); const p = i("signup-password"); if (p) p.value = ""; const c = i("signup-confirm-password"); if (c) c.value = ""; });
 
