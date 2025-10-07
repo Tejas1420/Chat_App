@@ -114,21 +114,36 @@ async function signIn() {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
+      credentials: "include"   // ✅ ensures cookie is set
     });
+
     if (res.ok) {
       currentUser = username;
+
+      // show chat screen
       showScreen("chat-screen");
-      const token = getCookie("token");
-      if (token) socket.emit("token login", token);
-      socket.emit("get sidebar");
+
+      // ✅ simulate the same behavior as socket login
+      socket.emit("sign in success", username);
+
+      // wait a bit for token cookie to be saved
+      setTimeout(() => {
+        const token = getCookie("token");
+        if (token) socket.emit("token login", token);
+
+        // always refresh sidebar + messages
+        socket.emit("get sidebar");
+        socket.emit("get group messages");
+      }, 400);
+
     } else {
       const json = await res.json().catch(() => ({}));
       alert("❌ " + (json.error || "Login failed"));
       i("signin-password").value = "";
     }
   } catch (e) {
-    // fallback to socket sign in if HTTP fails
+    // fallback to socket-based sign in if HTTP fails
     socket.emit("sign in", { username, password });
   }
 }
