@@ -299,6 +299,19 @@ app.post("/api/login", authLimiter, async (req, res) => {
   }
 });
 
+app.get("/api/auto-login", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json({ success: false });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const username = decoded.username;
+    res.json({ success: true, username });
+  } catch {
+    res.json({ success: false });
+  }
+});
+
 // ===== Socket.IO connection & event handlers (kept & patched) =====
 io.on("connection", (socket) => {
   console.log("📶 A user connected");
